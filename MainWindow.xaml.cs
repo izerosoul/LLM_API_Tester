@@ -16,6 +16,7 @@ namespace ApiTester
         private IApiProtocol[] _protocols = Array.Empty<IApiProtocol>();
         private List<Preset> _presets = new();
         private CancellationTokenSource? _cts;
+        private string _activePresetName = "";
         private string _lastResponse = "";   // 最近一次响应的原始体（供 Raw / Format JSON 切换）
         private bool _suspendPreview;         // 批量改控件时抑制预览刷新
 
@@ -48,6 +49,7 @@ namespace ApiTester
                 if (proto != null) BaseUrlBox.Text = proto.DefaultBaseUrl;
             };
             ModelBox.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler((s, e) => UpdatePreview()));
+            ModelBox.SelectionChanged += (s, e) => RememberActivePresetModel();
             MaxTokensBox.TextChanged += (s, e) => UpdatePreview();
             TempBox.TextChanged += (s, e) => UpdatePreview();
             SystemBox.TextChanged += (s, e) => UpdatePreview();
@@ -198,12 +200,20 @@ namespace ApiTester
                     try { models = proto.ParseModelList(res.Body); }
                     catch { models = new List<string>(); }
 
+                    string selectedModel = ModelBox.Text.Trim();
+
                     _suspendPreview = true;
                     ModelBox.Items.Clear();
                     foreach (var m in models) ModelBox.Items.Add(m);
-                    if (models.Count > 0) ModelBox.SelectedIndex = 0;
+                    if (!string.IsNullOrEmpty(selectedModel) && models.Contains(selectedModel))
+                        ModelBox.SelectedItem = selectedModel;
+                    else if (!string.IsNullOrEmpty(selectedModel))
+                        ModelBox.Text = selectedModel;
+                    else if (models.Count > 0)
+                        ModelBox.SelectedIndex = 0;
                     _suspendPreview = false;
                     UpdatePreview();
+                    RememberActivePresetModel();
 
                     _lastResponse = res.Body;
                     ResponseBox.Text = $"// {models.Count} model(s)\n" + string.Join("\n", models);
@@ -340,6 +350,7 @@ namespace ApiTester
             StreamBox.IsChecked = pr.Stream;
             SystemBox.Text = pr.System ?? "";
             MessageBox.Text = string.IsNullOrEmpty(pr.Message) ? "Hello" : pr.Message;
+            _activePresetName = name;
             _suspendPreview = false;
             UpdatePreview();
             PresetStore.MarkLastUsed(name, _presets);
@@ -368,6 +379,7 @@ namespace ApiTester
             };
             int idx = _presets.FindIndex(x => x.Name == name);
             if (idx >= 0) _presets[idx] = pr; else _presets.Add(pr);
+            _activePresetName = name;
             PresetStore.LastPresetName = name;
             PresetStore.Save(_presets);
             RefreshPresetBox(name);
@@ -380,6 +392,7 @@ namespace ApiTester
             int idx = _presets.FindIndex(x => x.Name == name);
             if (idx < 0) { StatusText.Text = "Status: preset not found"; return; }
             _presets.RemoveAt(idx);
+            if (_activePresetName == name) _activePresetName = "";
             if (PresetStore.LastPresetName == name) PresetStore.LastPresetName = "";
             PresetStore.Save(_presets);
             RefreshPresetBox("");
@@ -401,6 +414,21 @@ namespace ApiTester
             if (string.IsNullOrWhiteSpace(last)) return;
             if (_presets.Find(x => x.Name == last) == null) return;
             PresetBox.SelectedItem = last;
+        }
+
+        private void RememberActivePresetModel()
+        {
+            if (_suspendPreview) return;
+            if (string.IsNullOrWhiteSpace(_activePresetName)) return;
+
+            var pr = _presets.Find(x => x.Name == _activePresetName);
+            if (pr == null) return;
+
+            string model = ModelBox.Text.Trim();
+            if (pr.Model == model) return;
+
+            pr.Model = model;
+            PresetStore.MarkLastUsed(_activePresetName, _presets);
         }
 
         // ===== 杂项 =====
