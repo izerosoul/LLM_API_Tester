@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- WPF 桌面程序，WinExe 表示无控制台窗口 -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- 关闭隐式 using，显式书写命名空间，避免歧义 -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>ApiTester</AssemblyName>
+    <RootNamespace>ApiTester</RootNamespace>
+  </PropertyGroup>
+
+</Project>
