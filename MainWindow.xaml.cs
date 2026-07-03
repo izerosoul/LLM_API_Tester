@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -32,6 +31,7 @@ namespace ApiTester
             LoadPresetsToBox();
 
             ProtocolBox.SelectedIndex = 0;   // 触发协议默认值填充 + 首次预览
+            RestoreLastPreset();
         }
 
         // ===== 事件挂接（集中在代码里，XAML 只负责布局）=====
@@ -124,7 +124,7 @@ namespace ApiTester
             try
             {
                 var spec = proto.BuildChat(CurrentConfig(), CurrentParams(), StreamBox.IsChecked == true);
-                RequestBox.Text = RenderRequest(spec, ShowKeyBox.IsChecked == true);
+                RequestBox.Text = RenderRequest(spec);
             }
             catch (Exception ex)
             {
@@ -132,52 +132,39 @@ namespace ApiTester
             }
         }
 
-        // 把请求拼成可读文本（密钥默认脱敏）
-        private static string RenderRequest(HttpRequestSpec spec, bool showKey)
+        // 把请求拼成接近网络传输形态的完整 HTTP 报文。
+        private static string RenderRequest(HttpRequestSpec spec)
         {
             var sb = new StringBuilder();
-            string url = showKey ? spec.Url : MaskUrlKey(spec.Url);
-            sb.Append(spec.Method).Append(' ').Append(url).Append('\n');
+            string target = spec.Url;
+            if (Uri.TryCreate(spec.Url, UriKind.Absolute, out Uri? uri))
+                target = string.IsNullOrEmpty(uri.PathAndQuery) ? "/" : uri.PathAndQuery;
+
+            sb.Append(spec.Method).Append(' ').Append(target).Append(" HTTP/1.1\r\n");
+            if (uri != null) sb.Append("Host: ").Append(uri.Authority).Append("\r\n");
             foreach (var kv in spec.Headers)
             {
-                string val = (!showKey && IsSecretHeader(kv.Key)) ? Mask(kv.Value) : kv.Value;
-                sb.Append(kv.Key).Append(": ").Append(val).Append('\n');
+                sb.Append(kv.Key).Append(": ").Append(kv.Value).Append("\r\n");
             }
-            if (spec.Body != null) sb.Append("Content-Type: application/json\n");
-            sb.Append('\n');
-            if (spec.Body != null) sb.Append(JsonUtil.Pretty(spec.Body));
+            if (spec.Body != null)
+            {
+                sb.Append("Content-Type: application/json\r\n");
+                sb.Append("Content-Length: ").Append(Encoding.UTF8.GetByteCount(spec.Body)).Append("\r\n");
+            }
+            sb.Append("\r\n");
+            if (spec.Body != null)
+                sb.Append(IsDisplayableText(spec.Body) ? JsonUtil.Pretty(spec.Body) : "(binary content cannot be displayed)");
             return sb.ToString();
         }
 
-        private static bool IsSecretHeader(string name)
+        private static bool IsDisplayableText(string text)
         {
-            return name.Equals("Authorization", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("x-api-key", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("x-goog-api-key", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // 脱敏：保留 "Bearer " 前缀，token 显示前 6 + 后 4
-        private static string Mask(string value)
-        {
-            if (string.IsNullOrEmpty(value)) return value;
-            string prefix = "";
-            string token = value;
-            const string bearer = "Bearer ";
-            if (value.StartsWith(bearer, StringComparison.OrdinalIgnoreCase))
+            foreach (char ch in text)
             {
-                prefix = bearer;
-                token = value.Substring(bearer.Length);
+                if (char.IsControl(ch) && ch != '\r' && ch != '\n' && ch != '\t')
+                    return false;
             }
-            string masked = token.Length <= 10
-                ? new string('*', token.Length)
-                : token.Substring(0, 6) + "…" + token.Substring(token.Length - 4);
-            return prefix + masked;
-        }
-
-        // 脱敏 URL 中的 key= 查询参数
-        private static string MaskUrlKey(string url)
-        {
-            return Regex.Replace(url, "(key=)([^&]+)", m => m.Groups[1].Value + Mask(m.Groups[2].Value));
+            return true;
         }
 
         // ===== 列模型 =====
@@ -242,7 +229,7 @@ namespace ApiTester
             bool stream = StreamBox.IsChecked == true;
 
             HttpRequestSpec spec = proto.BuildChat(CurrentConfig(), CurrentParams(), stream);
-            RequestBox.Text = RenderRequest(spec, ShowKeyBox.IsChecked == true);
+            RequestBox.Text = RenderRequest(spec);
             ResponseBox.Clear();
             _lastResponse = "";
             TtftText.Text = "TTFT: -";
@@ -343,9 +330,19 @@ namespace ApiTester
             var proto = Array.Find(_protocols, x => x.Kind == pr.Kind);
             if (proto != null) ProtocolBox.SelectedItem = proto;   // 触发的预览被 _suspendPreview 抑制
             BaseUrlBox.Text = pr.BaseUrl;
-            if (pr.ApiKey != null) { KeyBox.Text = pr.ApiKey; RememberKeyBox.IsChecked = true; }
+            KeyBox.Text = pr.ApiKey ?? "";
+            RememberKeyBox.IsChecked = pr.RememberKey;
+            ShowKeyBox.IsChecked = pr.ShowKey;
+            AutoFillUrlBox.IsChecked = pr.AutoFillUrl;
+            ModelBox.Text = pr.Model ?? "";
+            MaxTokensBox.Text = string.IsNullOrEmpty(pr.MaxTokens) ? "256" : pr.MaxTokens;
+            TempBox.Text = pr.Temperature ?? "";
+            StreamBox.IsChecked = pr.Stream;
+            SystemBox.Text = pr.System ?? "";
+            MessageBox.Text = string.IsNullOrEmpty(pr.Message) ? "Hello" : pr.Message;
             _suspendPreview = false;
             UpdatePreview();
+            PresetStore.MarkLastUsed(name, _presets);
         }
 
         private void OnSavePreset()
@@ -358,10 +355,20 @@ namespace ApiTester
                 Name = name,
                 Kind = proto?.Kind ?? ProtocolKind.OpenAiChat,
                 BaseUrl = BaseUrlBox.Text.Trim(),
-                ApiKey = RememberKeyBox.IsChecked == true ? KeyBox.Text : null
+                ApiKey = KeyBox.Text,
+                RememberKey = RememberKeyBox.IsChecked == true,
+                ShowKey = ShowKeyBox.IsChecked == true,
+                AutoFillUrl = AutoFillUrlBox.IsChecked == true,
+                Model = ModelBox.Text.Trim(),
+                MaxTokens = MaxTokensBox.Text.Trim(),
+                Temperature = TempBox.Text.Trim(),
+                Stream = StreamBox.IsChecked == true,
+                System = SystemBox.Text,
+                Message = MessageBox.Text
             };
             int idx = _presets.FindIndex(x => x.Name == name);
             if (idx >= 0) _presets[idx] = pr; else _presets.Add(pr);
+            PresetStore.LastPresetName = name;
             PresetStore.Save(_presets);
             RefreshPresetBox(name);
             StatusText.Text = $"Status: preset '{name}' saved";
@@ -373,6 +380,7 @@ namespace ApiTester
             int idx = _presets.FindIndex(x => x.Name == name);
             if (idx < 0) { StatusText.Text = "Status: preset not found"; return; }
             _presets.RemoveAt(idx);
+            if (PresetStore.LastPresetName == name) PresetStore.LastPresetName = "";
             PresetStore.Save(_presets);
             RefreshPresetBox("");
             StatusText.Text = $"Status: preset '{name}' deleted";
@@ -385,6 +393,14 @@ namespace ApiTester
             foreach (var pr in _presets) PresetBox.Items.Add(pr.Name);
             PresetBox.Text = selectName;
             _suspendPreview = false;
+        }
+
+        private void RestoreLastPreset()
+        {
+            string last = PresetStore.LastPresetName;
+            if (string.IsNullOrWhiteSpace(last)) return;
+            if (_presets.Find(x => x.Name == last) == null) return;
+            PresetBox.SelectedItem = last;
         }
 
         // ===== 杂项 =====
