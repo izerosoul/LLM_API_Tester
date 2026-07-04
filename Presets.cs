@@ -14,7 +14,6 @@ namespace ApiTester
         public string BaseUrl { get; set; } = "";
         public string ApiKey { get; set; } = "";
         public bool RememberKey { get; set; }
-        public bool ShowKey { get; set; }
         public bool AutoFillUrl { get; set; }
         public string Model { get; set; } = "";
         public string MaxTokens { get; set; } = "256";

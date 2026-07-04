@@ -56,8 +56,6 @@ namespace ApiTester
             MessageBox.TextChanged += (s, e) => UpdatePreview();
             StreamBox.Checked += (s, e) => UpdatePreview();
             StreamBox.Unchecked += (s, e) => UpdatePreview();
-            ShowKeyBox.Checked += (s, e) => UpdatePreview();
-            ShowKeyBox.Unchecked += (s, e) => UpdatePreview();
 
             ListModelsBtn.Click += async (s, e) => await OnListModels();
             SendBtn.Click += async (s, e) => await OnSend();
@@ -342,7 +340,6 @@ namespace ApiTester
             BaseUrlBox.Text = pr.BaseUrl;
             KeyBox.Text = pr.ApiKey ?? "";
             RememberKeyBox.IsChecked = pr.RememberKey;
-            ShowKeyBox.IsChecked = pr.ShowKey;
             AutoFillUrlBox.IsChecked = pr.AutoFillUrl;
             ModelBox.Text = pr.Model ?? "";
             MaxTokensBox.Text = string.IsNullOrEmpty(pr.MaxTokens) ? "256" : pr.MaxTokens;
@@ -368,7 +365,6 @@ namespace ApiTester
                 BaseUrl = BaseUrlBox.Text.Trim(),
                 ApiKey = KeyBox.Text,
                 RememberKey = RememberKeyBox.IsChecked == true,
-                ShowKey = ShowKeyBox.IsChecked == true,
                 AutoFillUrl = AutoFillUrlBox.IsChecked == true,
                 Model = ModelBox.Text.Trim(),
                 MaxTokens = MaxTokensBox.Text.Trim(),

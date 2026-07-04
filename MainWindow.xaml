@@ -77,7 +77,6 @@
             <DockPanel Grid.Column="0">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,4">
                     <TextBlock Text="Request (preview)" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <CheckBox x:Name="ShowKeyBox" Content="Show key" VerticalAlignment="Center" Margin="14,0,0,0"/>
                     <Button x:Name="SendBtn" Content="Send" Width="80" Margin="14,0,0,0"/>
                     <Button x:Name="StopBtn" Content="Stop" Width="60" Margin="6,0,0,0" IsEnabled="False"/>
                     <Button x:Name="CopyReqBtn" Content="Copy" Width="60" Margin="6,0,0,0"/>
