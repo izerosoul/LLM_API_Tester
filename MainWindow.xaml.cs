@@ -662,7 +662,6 @@ namespace ApiTester
             TempBox.Text = pr.Temperature ?? "";
             StreamBox.IsChecked = pr.Stream;
             SystemBox.Text = pr.System ?? "";
-            MessageBox.Text = string.IsNullOrEmpty(pr.Message) ? "Hello" : pr.Message;
             RequestEditModeBox.IsChecked = pr.RequestPreviewEditable;
             AdvancedBox.IsChecked = pr.AdvancedVisible;
             _activePresetName = name;
@@ -693,7 +692,6 @@ namespace ApiTester
                 Temperature = TempBox.Text.Trim(),
                 Stream = StreamBox.IsChecked == true,
                 System = SystemBox.Text,
-                Message = MessageBox.Text,
                 RequestPreviewEditable = RequestEditModeBox.IsChecked == true,
                 AdvancedVisible = AdvancedBox.IsChecked == true
             };

@@ -22,7 +22,6 @@ namespace ApiTester
         public string Temperature { get; set; } = "";
         public bool Stream { get; set; }
         public string System { get; set; } = "";
-        public string Message { get; set; } = "Hello";
         public bool RequestPreviewEditable { get; set; }
         public bool AdvancedVisible { get; set; }
     }

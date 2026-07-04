@@ -96,7 +96,7 @@ bin\Release\ApiTester.exe
 **预设（Preset）** = 保存一套界面配置，方便下次一键切换。
 
 - **保存**：在 Preset 框输入一个名字，点 **Save**。
-- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、Thinking、timeout、token、temperature、stream、system、message、Advanced 展开状态等界面内容。
+- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、Thinking、timeout、token、temperature、stream、system、Advanced 展开状态等界面内容；Message 不会随 Preset 保存或回填。
 - **删除**：Preset 框显示某名字时点 **Delete**。
 - 切换 Model 时，当前 Preset 会只记住最后选择/输入的模型 ID，不保存完整模型列表。
 
