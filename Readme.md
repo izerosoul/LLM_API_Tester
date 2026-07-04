@@ -56,7 +56,7 @@ bin\Release\ApiTester.exe
   - `o1` / `o3` / `o4`：`None` / `Low` / `Medium` / `High` / `XHigh`
   - `Opus 4.x` / `Claude Opus`：`None` / `Low` / `Medium` / `High` / `XHigh`
   - `GPT 5.x` / `GPT OSS` / `Codex` / `GLM 5.x` / `Minimax M3` / `reasoning`：`None` / `Minimal` / `Low` / `Medium` / `High` / `XHigh`
-- **Max Output Tokens**：最大生成 token 数（默认 256）。
+- **Max Output Tokens**：最大生成 token 数（默认 1024）。
 - **Preset**：连接预设（可编辑下拉）。见第六节。
 - **Advanced**：默认折叠；展开后显示低频配置。折叠时如果有高级配置正在生效，会显示 `Advanced: ...` 摘要。
 - **Temperature**：temperature 采样温度（**留空则不发送**）。Claude 协议下禁用。

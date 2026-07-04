@@ -35,7 +35,7 @@ namespace ApiTester
     {
         public string Message = "Hello";   // 用户消息
         public string? System;             // system 提示（可空）
-        public int MaxTokens = 256;
+        public int MaxTokens = 1024;
         public double? Temperature;        // 可空：Claude 协议忽略
         public string? ReasoningEffort;    // 可空：OpenAI 推理模型使用
     }

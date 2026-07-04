@@ -18,7 +18,7 @@ namespace ApiTester
         public string ThinkingLevel { get; set; } = "None";
         public string ListModelsTimeoutSeconds { get; set; } = "5";
         public string SendTimeoutSeconds { get; set; } = "30";
-        public string MaxTokens { get; set; } = "256";
+        public string MaxTokens { get; set; } = "1024";
         public string Temperature { get; set; } = "";
         public bool Stream { get; set; }
         public string System { get; set; } = "";

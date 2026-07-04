@@ -80,7 +80,7 @@
                     <Label Content="Thinking:" Width="70" Margin="12,0,0,0"/>
                     <ComboBox x:Name="ThinkingBox" Width="96"/>
                     <Label Content="Max Output Tokens:" Width="124" Margin="12,0,0,0"/>
-                    <TextBox x:Name="MaxTokensBox" Width="70" Text="256"/>
+                    <TextBox x:Name="MaxTokensBox" Width="70" Text="1024"/>
                 </StackPanel>
                 <!-- Preset + Advanced -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">

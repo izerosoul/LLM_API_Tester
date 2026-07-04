@@ -116,7 +116,7 @@ namespace ApiTester
         private ChatParams CurrentParams()
         {
             var proto = CurrentProtocol();
-            int maxTok = int.TryParse(MaxTokensBox.Text.Trim(), out int mt) ? mt : 256;
+            int maxTok = int.TryParse(MaxTokensBox.Text.Trim(), out int mt) ? mt : 1024;
             double? temp = null;
             if (proto != null && proto.SupportsTemperature
                 && double.TryParse(TempBox.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out double tv))
@@ -655,7 +655,7 @@ namespace ApiTester
             ModelBox.Text = pr.Model ?? "";
             ListModelsTimeoutBox.Text = string.IsNullOrEmpty(pr.ListModelsTimeoutSeconds) ? "5" : pr.ListModelsTimeoutSeconds;
             SendTimeoutBox.Text = string.IsNullOrEmpty(pr.SendTimeoutSeconds) ? "30" : pr.SendTimeoutSeconds;
-            MaxTokensBox.Text = string.IsNullOrEmpty(pr.MaxTokens) ? "256" : pr.MaxTokens;
+            MaxTokensBox.Text = string.IsNullOrEmpty(pr.MaxTokens) ? "1024" : pr.MaxTokens;
             TempBox.Text = pr.Temperature ?? "";
             StreamBox.IsChecked = pr.Stream;
             SystemBox.Text = pr.System ?? "";
