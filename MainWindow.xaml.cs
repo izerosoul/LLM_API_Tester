@@ -495,6 +495,8 @@ namespace ApiTester
         {
             MessageBox.Height = advanced ? 92 : 26;
             MessageBox.TextWrapping = advanced ? TextWrapping.Wrap : TextWrapping.NoWrap;
+            MessageBox.VerticalScrollBarVisibility = advanced ? ScrollBarVisibility.Auto : ScrollBarVisibility.Hidden;
+            MessageBox.HorizontalScrollBarVisibility = advanced ? ScrollBarVisibility.Auto : ScrollBarVisibility.Hidden;
         }
 
         private void UpdateAdvancedSummary()
