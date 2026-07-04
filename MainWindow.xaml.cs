@@ -13,7 +13,9 @@ namespace ApiTester
     public partial class MainWindow : Window
     {
         private readonly ApiClient _client = new();
-        private static readonly string[] ThinkingLevels = { "None", "Minimal", "Low", "Medium", "High" };
+        private static readonly string[] NoThinkingLevels = { "None" };
+        private static readonly string[] OSeriesThinkingLevels = { "None", "Low", "Medium", "High", "XHigh" };
+        private static readonly string[] FullThinkingLevels = { "None", "Minimal", "Low", "Medium", "High", "XHigh" };
         private IApiProtocol[] _protocols = Array.Empty<IApiProtocol>();
         private List<Preset> _presets = new();
         private CancellationTokenSource? _cts;
@@ -28,7 +30,7 @@ namespace ApiTester
             _protocols = ProtocolFactory.All();
             ProtocolBox.ItemsSource = _protocols;
             ProtocolBox.DisplayMemberPath = "DisplayName";
-            ThinkingBox.ItemsSource = ThinkingLevels;
+            ThinkingBox.ItemsSource = NoThinkingLevels;
             ThinkingBox.SelectedItem = "None";
 
             HookEvents();
@@ -52,8 +54,8 @@ namespace ApiTester
                 var proto = CurrentProtocol();
                 if (proto != null) BaseUrlBox.Text = proto.DefaultBaseUrl;
             };
-            ModelBox.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler((s, e) => { ApplyThinkingDefaultForModel(); UpdatePreview(); }));
-            ModelBox.SelectionChanged += (s, e) => { ApplyThinkingDefaultForModel(); RememberActivePresetModel(); };
+            ModelBox.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler((s, e) => { ApplyThinkingProfileForModel(); UpdatePreview(); }));
+            ModelBox.SelectionChanged += (s, e) => { ApplyThinkingProfileForModel(); RememberActivePresetModel(); };
             ThinkingBox.SelectionChanged += (s, e) => UpdatePreview();
             MaxTokensBox.TextChanged += (s, e) => UpdatePreview();
             TempBox.TextChanged += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
@@ -348,7 +350,7 @@ namespace ApiTester
                     else if (models.Count > 0)
                         ModelBox.SelectedIndex = 0;
                     _suspendPreview = false;
-                    ApplyThinkingDefaultForModel();
+                    ApplyThinkingProfileForModel();
                     UpdatePreview();
                     RememberActivePresetModel();
 
@@ -528,12 +530,37 @@ namespace ApiTester
                 && seconds != defaultSeconds;
         }
 
-        private void ApplyThinkingDefaultForModel()
+        private void ApplyThinkingProfileForModel()
         {
             if (_suspendPreview) return;
-            string level = DefaultThinkingLevelForModel(ModelBox.Text.Trim());
-            if (!string.Equals(ThinkingBox.SelectedItem as string, level, StringComparison.Ordinal))
-                ThinkingBox.SelectedItem = level;
+            ApplyThinkingProfileForModel(DefaultThinkingLevelForModel(ModelBox.Text.Trim()));
+        }
+
+        private void ApplyThinkingProfileForModel(string? preferredLevel)
+        {
+            string model = ModelBox.Text.Trim();
+            string[] levels = ThinkingLevelsForModel(model);
+            if (!ReferenceEquals(ThinkingBox.ItemsSource, levels))
+                ThinkingBox.ItemsSource = levels;
+
+            string selected = NormalizeThinkingLevel(preferredLevel, levels);
+            if (selected == "None" && !string.Equals(preferredLevel, "None", StringComparison.OrdinalIgnoreCase))
+                selected = DefaultThinkingLevelForModel(model);
+
+            if (!string.Equals(ThinkingBox.SelectedItem as string, selected, StringComparison.Ordinal))
+                ThinkingBox.SelectedItem = selected;
+        }
+
+        private static string[] ThinkingLevelsForModel(string model)
+        {
+            string m = (model ?? "").Trim().ToLowerInvariant();
+            if (m.Length == 0) return NoThinkingLevels;
+            if (m.StartsWith("o1") || m.StartsWith("o3") || m.StartsWith("o4"))
+                return OSeriesThinkingLevels;
+            if (m.StartsWith("gpt-5") || m.StartsWith("gpt-oss") || m.Contains("codex") ||
+                m.Contains("reasoning"))
+                return FullThinkingLevels;
+            return NoThinkingLevels;
         }
 
         private static string DefaultThinkingLevelForModel(string model)
@@ -549,8 +576,13 @@ namespace ApiTester
 
         private static string NormalizeThinkingLevel(string? level)
         {
+            return NormalizeThinkingLevel(level, FullThinkingLevels);
+        }
+
+        private static string NormalizeThinkingLevel(string? level, string[] allowedLevels)
+        {
             string value = (level ?? "None").Trim();
-            foreach (string item in ThinkingLevels)
+            foreach (string item in allowedLevels)
             {
                 if (string.Equals(item, value, StringComparison.OrdinalIgnoreCase))
                     return item;
@@ -570,6 +602,7 @@ namespace ApiTester
                 case "low": return "low";
                 case "medium": return "medium";
                 case "high": return "high";
+                case "xhigh": return "xhigh";
                 default: return null;
             }
         }
@@ -611,7 +644,6 @@ namespace ApiTester
             KeyBox.Text = pr.ApiKey ?? "";
             AutoFillUrlBox.IsChecked = pr.AutoFillUrl;
             ModelBox.Text = pr.Model ?? "";
-            ThinkingBox.SelectedItem = NormalizeThinkingLevel(pr.ThinkingLevel);
             ListModelsTimeoutBox.Text = string.IsNullOrEmpty(pr.ListModelsTimeoutSeconds) ? "5" : pr.ListModelsTimeoutSeconds;
             SendTimeoutBox.Text = string.IsNullOrEmpty(pr.SendTimeoutSeconds) ? "30" : pr.SendTimeoutSeconds;
             MaxTokensBox.Text = string.IsNullOrEmpty(pr.MaxTokens) ? "256" : pr.MaxTokens;
@@ -623,6 +655,7 @@ namespace ApiTester
             AdvancedBox.IsChecked = pr.AdvancedVisible;
             _activePresetName = name;
             _suspendPreview = false;
+            ApplyThinkingProfileForModel(pr.ThinkingLevel);
             UpdateAdvancedVisibility();
             UpdatePreview(true);
             PresetStore.MarkLastUsed(name, _presets);

@@ -116,7 +116,8 @@
                     <TextBox x:Name="MessageBox" Width="700" Height="26" Text="Hello"
                              AcceptsReturn="True" TextWrapping="NoWrap"
                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
-                    <Button x:Name="OpenAiJuiceBtn" Content="OpenAI Juice" Width="106" Margin="8,0,0,0"/>
+                    <Button x:Name="OpenAiJuiceBtn" Content="OpenAI Juice" Width="106" Height="26"
+                            VerticalAlignment="Top" Margin="8,0,0,0"/>
                 </StackPanel>
             </StackPanel>
         </GroupBox>
