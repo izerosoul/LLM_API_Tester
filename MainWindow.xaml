@@ -70,7 +70,7 @@
                 <!-- API Key + List Models -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">
                     <Label Content="API Key:" Width="74"/>
-                    <TextBox x:Name="KeyBox" Width="420"/>
+                    <TextBox x:Name="KeyBox" Width="460"/>
                     <Button x:Name="ListModelsBtn" Content="List Models" Width="100" Margin="12,0,0,0"/>
                 </StackPanel>
                 <!-- Model + thinking + output length -->
@@ -107,13 +107,13 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,3">
                         <Label Content="System:" Width="74"/>
-                        <TextBox x:Name="SystemBox" Width="700"/>
+                        <TextBox x:Name="SystemBox" Width="626"/>
                     </StackPanel>
                 </StackPanel>
                 <!-- Message -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">
                     <Label Content="Message:" Width="74"/>
-                    <TextBox x:Name="MessageBox" Width="700" Height="26" Text="Hello"
+                    <TextBox x:Name="MessageBox" Width="626" Height="26" Text="Hello"
                              AcceptsReturn="True" TextWrapping="NoWrap"
                              VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Hidden"/>
                     <Button x:Name="OpenAiJuiceBtn" Content="OpenAI Juice" Width="106" Height="26"
