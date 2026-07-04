@@ -61,6 +61,8 @@ namespace ApiTester
             SendBtn.Click += async (s, e) => await OnSend();
             StopBtn.Click += (s, e) => _cts?.Cancel();
             CopyReqBtn.Click += (s, e) => CopyToClipboard(RequestBox.Text);
+            RequestEditModeBox.Checked += (s, e) => SetRequestEditMode(true);
+            RequestEditModeBox.Unchecked += (s, e) => SetRequestEditMode(false);
             FormatJsonBtn.Click += (s, e) => ResponseBox.Text = JsonUtil.Pretty(_lastResponse);
             RawRespBtn.Click += (s, e) => ResponseBox.Text = _lastResponse;
             CopyRespBtn.Click += (s, e) => CopyToClipboard(ResponseBox.Text);
@@ -116,9 +118,10 @@ namespace ApiTester
         }
 
         // ===== 请求预览 =====
-        private void UpdatePreview()
+        private void UpdatePreview(bool force = false)
         {
             if (_suspendPreview) return;
+            if (!force && RequestEditModeBox.IsChecked == true) return;
             var proto = CurrentProtocol();
             if (proto == null) return;
             try
@@ -163,6 +166,128 @@ namespace ApiTester
             {
                 if (char.IsControl(ch) && ch != '\r' && ch != '\n' && ch != '\t')
                     return false;
+            }
+            return true;
+        }
+
+        private static bool TryParseRequestPreview(string text, string baseUrl, bool stream,
+            out HttpRequestSpec spec, out string error)
+        {
+            spec = new HttpRequestSpec { IsStream = stream };
+            error = "";
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                error = "Request preview is empty.";
+                return false;
+            }
+
+            SplitRawHttp(text, out string headerText, out string bodyText);
+            string[] lines = headerText.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+            if (lines.Length == 0 || string.IsNullOrWhiteSpace(lines[0]))
+            {
+                error = "Missing HTTP request line.";
+                return false;
+            }
+
+            string[] requestParts = lines[0].Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (requestParts.Length < 2)
+            {
+                error = "Request line must look like: METHOD /path HTTP/1.1";
+                return false;
+            }
+
+            spec.Method = requestParts[0].ToUpperInvariant();
+            string target = requestParts[1];
+            string host = "";
+
+            for (int i = 1; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                int colon = line.IndexOf(':');
+                if (colon <= 0)
+                {
+                    error = "Invalid header line: " + line;
+                    return false;
+                }
+
+                string name = line.Substring(0, colon).Trim();
+                string value = line.Substring(colon + 1).Trim();
+                if (name.Length == 0) continue;
+
+                if (string.Equals(name, "Host", StringComparison.OrdinalIgnoreCase))
+                    host = value;
+                if (string.Equals(name, "Content-Length", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                spec.Headers[name] = value;
+            }
+
+            if (!TryResolvePreviewUrl(target, host, baseUrl, out string url, out error))
+                return false;
+
+            spec.Url = url;
+            spec.Body = bodyText.Length == 0 ? null : bodyText;
+            return true;
+        }
+
+        private static void SplitRawHttp(string text, out string headerText, out string bodyText)
+        {
+            int sep = text.IndexOf("\r\n\r\n", StringComparison.Ordinal);
+            int sepLen = 4;
+            if (sep < 0)
+            {
+                sep = text.IndexOf("\n\n", StringComparison.Ordinal);
+                sepLen = 2;
+            }
+            if (sep < 0)
+            {
+                sep = text.IndexOf("\r\r", StringComparison.Ordinal);
+                sepLen = 2;
+            }
+
+            if (sep < 0)
+            {
+                headerText = text;
+                bodyText = "";
+                return;
+            }
+
+            headerText = text.Substring(0, sep);
+            bodyText = text.Substring(sep + sepLen);
+        }
+
+        private static bool TryResolvePreviewUrl(string target, string host, string baseUrl,
+            out string url, out string error)
+        {
+            error = "";
+            if (Uri.TryCreate(target, UriKind.Absolute, out Uri? absolute))
+            {
+                url = absolute.ToString();
+                return true;
+            }
+
+            Uri? baseUri = null;
+            if (!string.IsNullOrWhiteSpace(baseUrl))
+                Uri.TryCreate(baseUrl.Trim(), UriKind.Absolute, out baseUri);
+
+            string scheme = baseUri?.Scheme ?? "https";
+            string authority = !string.IsNullOrWhiteSpace(host) ? host.Trim() : (baseUri?.Authority ?? "");
+            if (string.IsNullOrWhiteSpace(authority))
+            {
+                url = "";
+                error = "Relative request target needs a Host header or an absolute Base URL.";
+                return false;
+            }
+
+            string pathAndQuery = target.StartsWith("/") ? target : "/" + target;
+            url = scheme + "://" + authority + pathAndQuery;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out _))
+            {
+                error = "Could not resolve request URL: " + url;
+                return false;
             }
             return true;
         }
@@ -238,8 +363,21 @@ namespace ApiTester
             if (proto == null) return;
             bool stream = StreamBox.IsChecked == true;
 
-            HttpRequestSpec spec = proto.BuildChat(CurrentConfig(), CurrentParams(), stream);
-            RequestBox.Text = RenderRequest(spec);
+            HttpRequestSpec spec;
+            if (RequestEditModeBox.IsChecked == true)
+            {
+                if (!TryParseRequestPreview(RequestBox.Text, CurrentConfig().BaseUrl, stream, out spec, out string error))
+                {
+                    StatusText.Text = "Status: preview parse error";
+                    ResponseBox.Text = "Preview parse error:\n" + error;
+                    return;
+                }
+            }
+            else
+            {
+                spec = proto.BuildChat(CurrentConfig(), CurrentParams(), stream);
+                RequestBox.Text = RenderRequest(spec);
+            }
             ResponseBox.Clear();
             _lastResponse = "";
             TtftText.Text = "TTFT: -";
@@ -361,9 +499,10 @@ namespace ApiTester
             StreamBox.IsChecked = pr.Stream;
             SystemBox.Text = pr.System ?? "";
             MessageBox.Text = string.IsNullOrEmpty(pr.Message) ? "Hello" : pr.Message;
+            RequestEditModeBox.IsChecked = pr.RequestPreviewEditable;
             _activePresetName = name;
             _suspendPreview = false;
-            UpdatePreview();
+            UpdatePreview(true);
             PresetStore.MarkLastUsed(name, _presets);
         }
 
@@ -387,7 +526,8 @@ namespace ApiTester
                 Temperature = TempBox.Text.Trim(),
                 Stream = StreamBox.IsChecked == true,
                 System = SystemBox.Text,
-                Message = MessageBox.Text
+                Message = MessageBox.Text,
+                RequestPreviewEditable = RequestEditModeBox.IsChecked == true
             };
             int idx = _presets.FindIndex(x => x.Name == name);
             if (idx >= 0) _presets[idx] = pr; else _presets.Add(pr);
@@ -444,6 +584,13 @@ namespace ApiTester
         }
 
         // ===== 杂项 =====
+        private void SetRequestEditMode(bool editable)
+        {
+            RequestBox.IsReadOnly = !editable;
+            if (!editable && !_suspendPreview)
+                UpdatePreview(true);
+        }
+
         private void SetBusy(bool busy, string? status)
         {
             ListModelsBtn.IsEnabled = !busy;

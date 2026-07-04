@@ -50,7 +50,22 @@ namespace ApiTester
             if (spec.Body != null)
                 req.Content = new StringContent(spec.Body, Encoding.UTF8, "application/json");
             foreach (var kv in spec.Headers)
+            {
+                if (string.Equals(kv.Key, "Content-Length", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (string.Equals(kv.Key, "Host", StringComparison.OrdinalIgnoreCase))
+                {
+                    req.Headers.Host = kv.Value;
+                    continue;
+                }
+                if (req.Content != null && kv.Key.StartsWith("Content-", StringComparison.OrdinalIgnoreCase))
+                {
+                    req.Content.Headers.Remove(kv.Key);
+                    req.Content.Headers.TryAddWithoutValidation(kv.Key, kv.Value);
+                    continue;
+                }
                 req.Headers.TryAddWithoutValidation(kv.Key, kv.Value);
+            }
             return req;
         }
 

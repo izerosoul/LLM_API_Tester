@@ -23,6 +23,7 @@ namespace ApiTester
         public bool Stream { get; set; }
         public string System { get; set; } = "";
         public string Message { get; set; } = "Hello";
+        public bool RequestPreviewEditable { get; set; }
     }
 
     // 程序配置：与 EXE 同目录、同名 JSON，例如 ApiTester.json。
