@@ -48,10 +48,10 @@ bin\Release\ApiTester.exe
   - **不勾（默认）**：切换协议**不动** Base URL——方便你填自己的中转/自建/本地地址。
   - 程序启动时**默认不勾**，因此 **Base URL 初始为空**。
   - 各协议默认地址：OpenAI / Responses = `https://api.openai.com`；Claude = `https://api.anthropic.com`；Gemini = `https://generativelanguage.googleapis.com`。
-- **API Key**：密钥，**明文显示**。不同协议鉴权方式不同，工具会自动放到正确位置：OpenAI / Responses → `Authorization: Bearer`；Claude → `x-api-key`（+ `anthropic-version`）；Gemini → URL 的 `?key=`（+ `x-goog-api-key` 头）。
-- **Remember key**（勾选框）：见 [六、Remember key 与预设](#六remember-key-与预设重点)。
+- **API Key**：密钥，**明文显示**。不同协议鉴权方式不同，工具会自动放到正确位置：OpenAI / Responses → `Authorization: Bearer`；Claude → `x-api-key`（+ `anthropic-version`）；Gemini → URL 的 `?key=`（+ `x-goog-api-key` 头）。Preset 会保存 Key。
 - **List Models**：用当前 Base URL + Key 拉取模型列表，填进 Model 下拉；列表也会显示在右侧响应框。失败时状态栏/响应框显示错误。
 - **Model**：模型 ID，可从下拉选，也可手输。
+- **Thinking**：思考等级。选择模型时会自动匹配默认值；OpenAI Chat / Responses 会把非 `None` 值作为 reasoning 参数发送，Claude / Gemini 忽略。
 - **Max Output Tokens**：最大生成 token 数（默认 256）。
 - **Preset**：连接预设（可编辑下拉）。见第六节。
 - **Advanced**：默认折叠；展开后显示低频配置。折叠时如果有高级配置正在生效，会显示 `Advanced: ...` 摘要。
@@ -60,7 +60,8 @@ bin\Release\ApiTester.exe
 - **List Models Timeout**：List Models 请求超时秒数，默认 5 秒。
 - **Send Timeout**：Send 请求超时秒数，默认 30 秒；流式请求也会按该值限制总耗时。
 - **System**：system 提示（可留空）。
-- **Message**：要发送的用户消息（默认 `Hello`），支持粘贴多行文本。
+- **Message**：要发送的用户消息（默认 `Hello`），支持粘贴多行文本；Advanced 展开时显示为多行输入框。
+- **OpenAI Juice**：把内置的 OpenAI Juice 测试 XML 填入 Message。
 
 ### 中部
 - **Request (preview)**：发送前**实时预览**将要发出的完整 HTTP 请求包（请求行 + Host + 头 + body），Key 会按真实内容显示。
@@ -86,17 +87,14 @@ bin\Release\ApiTester.exe
 
 ---
 
-## 六、Remember key 与预设（重点）
+## 六、预设（Preset）
 
 **预设（Preset）** = 保存一套界面配置，方便下次一键切换。
 
 - **保存**：在 Preset 框输入一个名字，点 **Save**。
-- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、timeout、token、temperature、stream、system、message、Advanced 展开状态等界面内容。
+- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、Thinking、timeout、token、temperature、stream、system、message、Advanced 展开状态等界面内容。
 - **删除**：Preset 框显示某名字时点 **Delete**。
 - 切换 Model 时，当前 Preset 会只记住最后选择/输入的模型 ID，不保存完整模型列表。
-
-**Remember key 的作用**：
-- Preset 会保存 API Key；这个勾选框只作为界面状态一起保存。
 
 **保存到哪里**：
 ```
@@ -114,6 +112,7 @@ bin\Release\ApiTester.json
       "BaseUrl": "https://api.openai.com",
       "ApiKey": "sk-xxxx",
       "Model": "gpt-4.1",
+      "ThinkingLevel": "None",
       "ListModelsTimeoutSeconds": "5",
       "SendTimeoutSeconds": "30",
       "AdvancedVisible": false

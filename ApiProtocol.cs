@@ -37,6 +37,7 @@ namespace ApiTester
         public string? System;             // system 提示（可空）
         public int MaxTokens = 256;
         public double? Temperature;        // 可空：Claude 协议忽略
+        public string? ReasoningEffort;    // 可空：OpenAI 推理模型使用
     }
 
     // 非流式对话结果

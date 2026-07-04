@@ -49,6 +49,7 @@ namespace ApiTester
                 instructions = string.IsNullOrWhiteSpace(p.System) ? null : p.System,
                 max_output_tokens = p.MaxTokens,
                 temperature = p.Temperature,
+                reasoning = string.IsNullOrWhiteSpace(p.ReasoningEffort) ? null : new { effort = p.ReasoningEffort },
                 stream = stream
             };
             var spec = new HttpRequestSpec

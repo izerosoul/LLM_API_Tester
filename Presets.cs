@@ -13,9 +13,9 @@ namespace ApiTester
         public ProtocolKind Kind { get; set; }
         public string BaseUrl { get; set; } = "";
         public string ApiKey { get; set; } = "";
-        public bool RememberKey { get; set; }
         public bool AutoFillUrl { get; set; }
         public string Model { get; set; } = "";
+        public string ThinkingLevel { get; set; } = "None";
         public string ListModelsTimeoutSeconds { get; set; } = "5";
         public string SendTimeoutSeconds { get; set; } = "30";
         public string MaxTokens { get; set; } = "256";

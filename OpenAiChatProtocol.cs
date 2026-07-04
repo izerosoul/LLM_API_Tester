@@ -51,6 +51,7 @@ namespace ApiTester
                 messages = messages,
                 max_tokens = p.MaxTokens,
                 temperature = p.Temperature,   // 为 null 时序列化阶段被忽略
+                reasoning_effort = p.ReasoningEffort,
                 stream = stream
             };
             var spec = new HttpRequestSpec
