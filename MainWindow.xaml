@@ -73,34 +73,41 @@
                     <TextBox x:Name="KeyBox" Width="360"/>
                     <CheckBox x:Name="RememberKeyBox" Content="Remember key" VerticalAlignment="Center" Margin="12,0,0,0"/>
                     <Button x:Name="ListModelsBtn" Content="List Models" Width="100" Margin="12,0,0,0"/>
-                    <Label Content="Timeout:" Width="64" Margin="12,0,0,0"/>
-                    <TextBox x:Name="ListModelsTimeoutBox" Width="50" Text="5"/>
-                    <TextBlock Text="s" VerticalAlignment="Center" Margin="4,0,0,0" Foreground="#334155"/>
                 </StackPanel>
-                <!-- Model + output length + temperature + Stream -->
+                <!-- Model + output length -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">
                     <Label Content="Model:" Width="74"/>
                     <ComboBox x:Name="ModelBox" Width="280" IsEditable="True"/>
                     <Label Content="Max Output Tokens:" Width="124" Margin="12,0,0,0"/>
                     <TextBox x:Name="MaxTokensBox" Width="70" Text="256"/>
-                    <Label Content="Temperature:" Width="84" Margin="12,0,0,0"/>
-                    <TextBox x:Name="TempBox" Width="60"/>
-                    <CheckBox x:Name="StreamBox" Content="Stream (SSE)" VerticalAlignment="Center" Margin="16,0,0,0"/>
-                    <Label Content="Send Timeout:" Width="96" Margin="16,0,0,0"/>
-                    <TextBox x:Name="SendTimeoutBox" Width="50" Text="30"/>
-                    <TextBlock Text="s" VerticalAlignment="Center" Margin="4,0,0,0" Foreground="#334155"/>
                 </StackPanel>
-                <!-- Preset -->
+                <!-- Preset + Advanced -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">
                     <Label Content="Preset:" Width="74"/>
                     <ComboBox x:Name="PresetBox" Width="220" IsEditable="True"/>
                     <Button x:Name="SavePresetBtn" Content="Save" Width="70" Margin="8,0,0,0"/>
                     <Button x:Name="DelPresetBtn" Content="Delete" Width="70" Margin="8,0,0,0"/>
+                    <CheckBox x:Name="AdvancedBox" Content="Advanced" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                    <TextBlock x:Name="AdvancedSummaryText" VerticalAlignment="Center" Margin="10,0,0,0"
+                               Foreground="#64748B" Visibility="Collapsed"/>
                 </StackPanel>
-                <!-- System -->
-                <StackPanel Orientation="Horizontal" Margin="0,3">
-                    <Label Content="System:" Width="74"/>
-                    <TextBox x:Name="SystemBox" Width="700"/>
+                <!-- Advanced options -->
+                <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal" Margin="0,3">
+                        <Label Content="Temperature:" Width="74"/>
+                        <TextBox x:Name="TempBox" Width="60"/>
+                        <CheckBox x:Name="StreamBox" Content="Stream (SSE)" VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        <Label Content="List Timeout:" Width="86" Margin="16,0,0,0"/>
+                        <TextBox x:Name="ListModelsTimeoutBox" Width="50" Text="5"/>
+                        <TextBlock Text="s" VerticalAlignment="Center" Margin="4,0,0,0" Foreground="#334155"/>
+                        <Label Content="Send Timeout:" Width="96" Margin="16,0,0,0"/>
+                        <TextBox x:Name="SendTimeoutBox" Width="50" Text="30"/>
+                        <TextBlock Text="s" VerticalAlignment="Center" Margin="4,0,0,0" Foreground="#334155"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,3">
+                        <Label Content="System:" Width="74"/>
+                        <TextBox x:Name="SystemBox" Width="700"/>
+                    </StackPanel>
                 </StackPanel>
                 <!-- Message -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">

@@ -34,7 +34,7 @@ bin\Release\ApiTester.exe
 2. 填 **Base URL**（接口根地址）。想让它随协议自动填默认地址，就勾右侧 **Auto-fill URL**（见下）。
 3. 填 **API Key**（明文显示，方便核对/粘贴）。
 4. 点 **List Models** 拉取模型 → 在 **Model** 下拉里选一个。
-5. 在 **Message** 写内容（默认 `Hello`），点 **Send**。想看流式输出就勾 **Stream**。
+5. 在 **Message** 写内容（默认 `Hello`），点 **Send**。想看流式输出就展开 **Advanced** 后勾 **Stream**。
 
 ---
 
@@ -51,13 +51,14 @@ bin\Release\ApiTester.exe
 - **API Key**：密钥，**明文显示**。不同协议鉴权方式不同，工具会自动放到正确位置：OpenAI / Responses → `Authorization: Bearer`；Claude → `x-api-key`（+ `anthropic-version`）；Gemini → URL 的 `?key=`（+ `x-goog-api-key` 头）。
 - **Remember key**（勾选框）：见 [六、Remember key 与预设](#六remember-key-与预设重点)。
 - **List Models**：用当前 Base URL + Key 拉取模型列表，填进 Model 下拉；列表也会显示在右侧响应框。失败时状态栏/响应框显示错误。
-- **List Models Timeout**：List Models 请求超时秒数，默认 5 秒。
 - **Model**：模型 ID，可从下拉选，也可手输。
 - **Max Output Tokens**：最大生成 token 数（默认 256）。
+- **Preset**：连接预设（可编辑下拉）。见第六节。
+- **Advanced**：默认折叠；展开后显示低频配置。折叠时如果有高级配置正在生效，会显示 `Advanced: ...` 摘要。
 - **Temperature**：temperature 采样温度（**留空则不发送**）。Claude 协议下禁用。
 - **Stream (SSE)**：勾选后走流式，响应实时逐块追加显示，并统计首字耗时 TTFT。
+- **List Models Timeout**：List Models 请求超时秒数，默认 5 秒。
 - **Send Timeout**：Send 请求超时秒数，默认 30 秒；流式请求也会按该值限制总耗时。
-- **Preset**：连接预设（可编辑下拉）。见第六节。
 - **System**：system 提示（可留空）。
 - **Message**：要发送的用户消息（默认 `Hello`），支持粘贴多行文本。
 
@@ -90,7 +91,7 @@ bin\Release\ApiTester.exe
 **预设（Preset）** = 保存一套界面配置，方便下次一键切换。
 
 - **保存**：在 Preset 框输入一个名字，点 **Save**。
-- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、timeout、token、temperature、stream、system、message 等界面内容。
+- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、timeout、token、temperature、stream、system、message、Advanced 展开状态等界面内容。
 - **删除**：Preset 框显示某名字时点 **Delete**。
 - 切换 Model 时，当前 Preset 会只记住最后选择/输入的模型 ID，不保存完整模型列表。
 
@@ -114,7 +115,8 @@ bin\Release\ApiTester.json
       "ApiKey": "sk-xxxx",
       "Model": "gpt-4.1",
       "ListModelsTimeoutSeconds": "5",
-      "SendTimeoutSeconds": "30"
+      "SendTimeoutSeconds": "30",
+      "AdvancedVisible": false
     }
   ]
 }

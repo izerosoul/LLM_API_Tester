@@ -33,12 +33,13 @@ namespace ApiTester
 
             ProtocolBox.SelectedIndex = 0;   // 触发协议默认值填充 + 首次预览
             RestoreLastPreset();
+            UpdateAdvancedVisibility();
         }
 
         // ===== 事件挂接（集中在代码里，XAML 只负责布局）=====
         private void HookEvents()
         {
-            ProtocolBox.SelectionChanged += (s, e) => { ApplyProtocolDefaults(); UpdatePreview(); };
+            ProtocolBox.SelectionChanged += (s, e) => { ApplyProtocolDefaults(); UpdatePreview(); UpdateAdvancedSummary(); };
 
             BaseUrlBox.TextChanged += (s, e) => UpdatePreview();
             KeyBox.TextChanged += (s, e) => UpdatePreview();
@@ -51,11 +52,15 @@ namespace ApiTester
             ModelBox.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler((s, e) => UpdatePreview()));
             ModelBox.SelectionChanged += (s, e) => RememberActivePresetModel();
             MaxTokensBox.TextChanged += (s, e) => UpdatePreview();
-            TempBox.TextChanged += (s, e) => UpdatePreview();
-            SystemBox.TextChanged += (s, e) => UpdatePreview();
+            TempBox.TextChanged += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
+            ListModelsTimeoutBox.TextChanged += (s, e) => UpdateAdvancedSummary();
+            SendTimeoutBox.TextChanged += (s, e) => UpdateAdvancedSummary();
+            SystemBox.TextChanged += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
             MessageBox.TextChanged += (s, e) => UpdatePreview();
-            StreamBox.Checked += (s, e) => UpdatePreview();
-            StreamBox.Unchecked += (s, e) => UpdatePreview();
+            StreamBox.Checked += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
+            StreamBox.Unchecked += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
+            AdvancedBox.Checked += (s, e) => UpdateAdvancedVisibility();
+            AdvancedBox.Unchecked += (s, e) => UpdateAdvancedVisibility();
 
             ListModelsBtn.Click += async (s, e) => await OnListModels();
             SendBtn.Click += async (s, e) => await OnSend();
@@ -468,6 +473,47 @@ namespace ApiTester
             return defaultSeconds;
         }
 
+        private void UpdateAdvancedVisibility()
+        {
+            bool show = AdvancedBox.IsChecked == true;
+            AdvancedPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            UpdateAdvancedSummary();
+        }
+
+        private void UpdateAdvancedSummary()
+        {
+            if (AdvancedBox.IsChecked == true)
+            {
+                AdvancedSummaryText.Text = "";
+                AdvancedSummaryText.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            var active = new List<string>();
+            if (!string.IsNullOrWhiteSpace(TempBox.Text)) active.Add("Temp");
+            if (StreamBox.IsChecked == true) active.Add("Stream");
+            if (HasNonDefaultTimeout(ListModelsTimeoutBox, 5)) active.Add("List timeout");
+            if (HasNonDefaultTimeout(SendTimeoutBox, 30)) active.Add("Send timeout");
+            if (!string.IsNullOrWhiteSpace(SystemBox.Text)) active.Add("System");
+
+            if (active.Count == 0)
+            {
+                AdvancedSummaryText.Text = "";
+                AdvancedSummaryText.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            AdvancedSummaryText.Text = "Advanced: " + string.Join(", ", active);
+            AdvancedSummaryText.Visibility = Visibility.Visible;
+        }
+
+        private static bool HasNonDefaultTimeout(TextBox box, int defaultSeconds)
+        {
+            return int.TryParse(box.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int seconds)
+                && seconds > 0
+                && seconds != defaultSeconds;
+        }
+
         // ===== 预设 =====
         private void LoadPresetsToBox()
         {
@@ -500,8 +546,10 @@ namespace ApiTester
             SystemBox.Text = pr.System ?? "";
             MessageBox.Text = string.IsNullOrEmpty(pr.Message) ? "Hello" : pr.Message;
             RequestEditModeBox.IsChecked = pr.RequestPreviewEditable;
+            AdvancedBox.IsChecked = pr.AdvancedVisible;
             _activePresetName = name;
             _suspendPreview = false;
+            UpdateAdvancedVisibility();
             UpdatePreview(true);
             PresetStore.MarkLastUsed(name, _presets);
         }
@@ -527,7 +575,8 @@ namespace ApiTester
                 Stream = StreamBox.IsChecked == true,
                 System = SystemBox.Text,
                 Message = MessageBox.Text,
-                RequestPreviewEditable = RequestEditModeBox.IsChecked == true
+                RequestPreviewEditable = RequestEditModeBox.IsChecked == true,
+                AdvancedVisible = AdvancedBox.IsChecked == true
             };
             int idx = _presets.FindIndex(x => x.Name == name);
             if (idx >= 0) _presets[idx] = pr; else _presets.Add(pr);
