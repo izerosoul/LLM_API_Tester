@@ -635,6 +635,7 @@ namespace ApiTester
         {
             _presets = PresetStore.Load();
             _suspendPreview = true;
+            SortPresetsByName();
             PresetBox.Items.Clear();
             foreach (var pr in _presets) PresetBox.Items.Add(pr.Name);
             _suspendPreview = false;
@@ -698,6 +699,7 @@ namespace ApiTester
             if (idx >= 0) _presets[idx] = pr; else _presets.Add(pr);
             _activePresetName = name;
             PresetStore.LastPresetName = name;
+            SortPresetsByName();
             PresetStore.Save(_presets);
             RefreshPresetBox(name);
             StatusText.Text = $"Status: preset '{name}' saved";
@@ -719,10 +721,16 @@ namespace ApiTester
         private void RefreshPresetBox(string selectName)
         {
             _suspendPreview = true;
+            SortPresetsByName();
             PresetBox.Items.Clear();
             foreach (var pr in _presets) PresetBox.Items.Add(pr.Name);
             PresetBox.Text = selectName;
             _suspendPreview = false;
+        }
+
+        private void SortPresetsByName()
+        {
+            _presets.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
         }
 
         private void RestoreLastPreset()
