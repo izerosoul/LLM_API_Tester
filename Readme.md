@@ -59,7 +59,7 @@ bin\Release\ApiTester.exe
 - **Send Timeout**：Send 请求超时秒数，默认 30 秒；流式请求也会按该值限制总耗时。
 - **Preset**：连接预设（可编辑下拉）。见第六节。
 - **System**：system 提示（可留空）。
-- **Message**：要发送的用户消息（默认 `Hello`）。
+- **Message**：要发送的用户消息（默认 `Hello`），支持粘贴多行文本。
 
 ### 中部
 - **Request (preview)**：发送前**实时预览**将要发出的完整 HTTP 请求包（请求行 + Host + 头 + body），Key 会按真实内容显示。

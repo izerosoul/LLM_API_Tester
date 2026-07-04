@@ -105,7 +105,9 @@
                 <!-- Message -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">
                     <Label Content="Message:" Width="74"/>
-                    <TextBox x:Name="MessageBox" Width="700" Text="Hello"/>
+                    <TextBox x:Name="MessageBox" Width="700" Height="26" Text="Hello"
+                             AcceptsReturn="True" TextWrapping="NoWrap"
+                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
                 </StackPanel>
             </StackPanel>
         </GroupBox>
