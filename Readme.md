@@ -51,10 +51,12 @@ bin\Release\ApiTester.exe
 - **API Key**：密钥，**明文显示**。不同协议鉴权方式不同，工具会自动放到正确位置：OpenAI / Responses → `Authorization: Bearer`；Claude → `x-api-key`（+ `anthropic-version`）；Gemini → URL 的 `?key=`（+ `x-goog-api-key` 头）。
 - **Remember key**（勾选框）：见 [六、Remember key 与预设](#六remember-key-与预设重点)。
 - **List Models**：用当前 Base URL + Key 拉取模型列表，填进 Model 下拉；列表也会显示在右侧响应框。失败时状态栏/响应框显示错误。
+- **List Models Timeout**：List Models 请求超时秒数，默认 5 秒。
 - **Model**：模型 ID，可从下拉选，也可手输。
 - **Max Output Tokens**：最大生成 token 数（默认 256）。
 - **Temperature**：temperature 采样温度（**留空则不发送**）。Claude 协议下禁用。
 - **Stream (SSE)**：勾选后走流式，响应实时逐块追加显示，并统计首字耗时 TTFT。
+- **Send Timeout**：Send 请求超时秒数，默认 30 秒；流式请求也会按该值限制总耗时。
 - **Preset**：连接预设（可编辑下拉）。见第六节。
 - **System**：system 提示（可留空）。
 - **Message**：要发送的用户消息（默认 `Hello`）。
@@ -84,15 +86,15 @@ bin\Release\ApiTester.exe
 
 ## 六、Remember key 与预设（重点）
 
-**预设（Preset）** = 保存一套“协议 + Base URL（可含 Key）”组合，方便下次一键切换。
+**预设（Preset）** = 保存一套界面配置，方便下次一键切换。
 
 - **保存**：在 Preset 框输入一个名字，点 **Save**。
-- **加载**：在 Preset 下拉里选中某名字 → 自动回填 协议 / Base URL（/ Key）。
+- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、timeout、token、temperature、stream、system、message 等界面内容。
 - **删除**：Preset 框显示某名字时点 **Delete**。
+- 切换 Model 时，当前 Preset 会只记住最后选择/输入的模型 ID，不保存完整模型列表。
 
 **Remember key 的作用**：
-- **勾选 + 点 Save** → 这条预设里**连 API Key 一起保存**。
-- **不勾 + 点 Save** → 只存 协议 + Base URL，**不存 Key**（下次加载后需自己再填 Key）。
+- Preset 会保存 API Key；这个勾选框只作为界面状态一起保存。
 
 **保存到哪里**：
 ```
@@ -104,14 +106,20 @@ bin\Release\ApiTester.json
 {
   "LastPresetName": "my-openai",
   "Presets": [
-    { "Name": "my-openai", "Kind": 0, "BaseUrl": "https://api.openai.com", "ApiKey": "sk-xxxx" }
+    {
+      "Name": "my-openai",
+      "Kind": 0,
+      "BaseUrl": "https://api.openai.com",
+      "ApiKey": "sk-xxxx",
+      "Model": "gpt-4.1",
+      "ListModelsTimeoutSeconds": "5",
+      "SendTimeoutSeconds": "30"
+    }
   ]
 }
 ```
 
 程序会默认加载上次使用的 Preset。
-
-> ⚠️ **安全提示**：Key 是**明文**保存（未加密）。请勿把该 json 文件分享 / 上传 / 提交到代码仓库。不想留 Key 就**别勾 Remember key**。
 
 ---
 

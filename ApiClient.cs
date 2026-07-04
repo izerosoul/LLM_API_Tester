@@ -40,7 +40,7 @@ namespace ApiTester
             // .NET Framework 默认协议在旧系统上可能偏保守，这里显式启用 TLS 1.2。
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
             var c = new HttpClient();
-            c.Timeout = TimeSpan.FromMinutes(5);
+            c.Timeout = Timeout.InfiniteTimeSpan;
             return c;
         }
 
@@ -63,24 +63,43 @@ namespace ApiTester
                     result.Headers[h.Key] = string.Join(", ", h.Value);
         }
 
+        private static Exception BuildCancellationError(CancellationToken userToken,
+            CancellationToken timeoutToken, TimeSpan timeout, Exception inner)
+        {
+            if (timeoutToken.IsCancellationRequested && !userToken.IsCancellationRequested)
+                return new TimeoutException($"Timed out after {FormatTimeout(timeout)}.", inner);
+            return new OperationCanceledException("Cancelled");
+        }
+
+        private static string FormatTimeout(TimeSpan timeout)
+        {
+            double seconds = timeout.TotalSeconds;
+            return Math.Abs(seconds - Math.Round(seconds)) < 0.001
+                ? ((int)Math.Round(seconds)).ToString() + " seconds"
+                : seconds.ToString("0.###") + " seconds";
+        }
+
         // 非流式：读取完整响应
-        public async Task<HttpResult> SendAsync(HttpRequestSpec spec, CancellationToken ct)
+        public async Task<HttpResult> SendAsync(HttpRequestSpec spec, TimeSpan timeout, CancellationToken ct)
         {
             var result = new HttpResult();
             var sw = Stopwatch.StartNew();
+            using var timeoutCts = new CancellationTokenSource();
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+            if (timeout > TimeSpan.Zero) timeoutCts.CancelAfter(timeout);
             try
             {
                 using var req = BuildRequest(spec);
                 using HttpResponseMessage resp =
-                    await Http.SendAsync(req, HttpCompletionOption.ResponseContentRead, ct).ConfigureAwait(false);
+                    await Http.SendAsync(req, HttpCompletionOption.ResponseContentRead, linkedCts.Token).ConfigureAwait(false);
                 result.Status = (int)resp.StatusCode;
                 result.StatusText = resp.ReasonPhrase ?? "";
                 CopyHeaders(resp, result);
                 result.Body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ex)
             {
-                result.Error = new OperationCanceledException("Cancelled");
+                result.Error = BuildCancellationError(ct, timeoutCts.Token, timeout, ex);
             }
             catch (Exception ex)
             {
@@ -94,12 +113,16 @@ namespace ApiTester
 
         // 流式：逐 SSE 事件块解析；实时回调增量文本；返回末尾汇总（含 usage / 状态 / 原始 SSE）
         public async Task<HttpResult> StreamAsync(HttpRequestSpec spec, IApiProtocol proto,
-            Action<long> onFirstByte, Action<string> onDelta, CancellationToken ct)
+            Action<long> onFirstByte, Action<string> onDelta, TimeSpan timeout, CancellationToken ct)
         {
             var result = new HttpResult();
             var sw = Stopwatch.StartNew();
             var raw = new StringBuilder();
             bool gotFirst = false;
+            using var timeoutCts = new CancellationTokenSource();
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+            if (timeout > TimeSpan.Zero) timeoutCts.CancelAfter(timeout);
+            CancellationToken requestToken = linkedCts.Token;
 
             // 处理一个完整的 SSE 事件块
             void HandleBlock(string blk)
@@ -125,7 +148,7 @@ namespace ApiTester
             {
                 using var req = BuildRequest(spec);
                 using HttpResponseMessage resp =
-                    await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+                    await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, requestToken).ConfigureAwait(false);
                 result.Status = (int)resp.StatusCode;
                 result.StatusText = resp.ReasonPhrase ?? "";
                 CopyHeaders(resp, result);
@@ -133,17 +156,23 @@ namespace ApiTester
                 if (!resp.IsSuccessStatusCode)
                 {
                     // 错误：读完整错误体返回
-                    result.Body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    using Stream s = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                    using var cancelRead = requestToken.Register(() => { try { s.Dispose(); } catch { } });
+                    using var reader = new StreamReader(s, Encoding.UTF8);
+                    result.Body = await reader.ReadToEndAsync().ConfigureAwait(false);
+                    requestToken.ThrowIfCancellationRequested();
                 }
                 else
                 {
                     using Stream s = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                    using var cancelRead = requestToken.Register(() => { try { s.Dispose(); } catch { } });
                     using var reader = new StreamReader(s, Encoding.UTF8);
 
                     var block = new StringBuilder();
                     string? line;
                     while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
                     {
+                        requestToken.ThrowIfCancellationRequested();
                         if (line.Length == 0)
                         {
                             if (block.Length > 0) { HandleBlock(block.ToString()); block.Clear(); }
@@ -156,9 +185,14 @@ namespace ApiTester
                     result.Body = raw.ToString();   // 原始 SSE 累积，供 "Raw" 查看
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ex)
             {
-                result.Error = new OperationCanceledException("Cancelled");
+                result.Error = BuildCancellationError(ct, timeoutCts.Token, timeout, ex);
+                if (result.Body.Length == 0) result.Body = raw.ToString();
+            }
+            catch (Exception ex) when (requestToken.IsCancellationRequested && (ex is IOException || ex is ObjectDisposedException))
+            {
+                result.Error = BuildCancellationError(ct, timeoutCts.Token, timeout, ex);
                 if (result.Body.Length == 0) result.Body = raw.ToString();
             }
             catch (Exception ex)

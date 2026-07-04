@@ -178,7 +178,9 @@ namespace ApiTester
             try
             {
                 HttpRequestSpec spec = proto.BuildListModels(CurrentConfig());
-                res = await _client.SendAsync(spec, _cts.Token);
+                res = await _client.SendAsync(spec,
+                    TimeSpan.FromSeconds(ReadTimeoutSeconds(ListModelsTimeoutBox, 5)),
+                    _cts.Token);
 
                 if (res.Error != null)
                 {
@@ -248,16 +250,18 @@ namespace ApiTester
             HttpResult res = new();
             try
             {
+                TimeSpan timeout = TimeSpan.FromSeconds(ReadTimeoutSeconds(SendTimeoutBox, 30));
                 if (stream)
                 {
                     res = await _client.StreamAsync(spec, proto,
                         ttft => Dispatcher.InvokeAsync(() => TtftText.Text = $"TTFT: {ttft} ms"),
                         text => Dispatcher.InvokeAsync(() => { ResponseBox.AppendText(text); ResponseBox.ScrollToEnd(); }),
+                        timeout,
                         _cts.Token);
                 }
                 else
                 {
-                    res = await _client.SendAsync(spec, _cts.Token);
+                    res = await _client.SendAsync(spec, timeout, _cts.Token);
                 }
                 _lastResponse = res.Body;
             }
@@ -318,6 +322,14 @@ namespace ApiTester
 
         private static string Show(int? v) => v.HasValue ? v.Value.ToString() : "?";
 
+        private static int ReadTimeoutSeconds(TextBox box, int defaultSeconds)
+        {
+            if (int.TryParse(box.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int seconds)
+                && seconds > 0)
+                return seconds;
+            return defaultSeconds;
+        }
+
         // ===== 预设 =====
         private void LoadPresetsToBox()
         {
@@ -342,6 +354,8 @@ namespace ApiTester
             RememberKeyBox.IsChecked = pr.RememberKey;
             AutoFillUrlBox.IsChecked = pr.AutoFillUrl;
             ModelBox.Text = pr.Model ?? "";
+            ListModelsTimeoutBox.Text = string.IsNullOrEmpty(pr.ListModelsTimeoutSeconds) ? "5" : pr.ListModelsTimeoutSeconds;
+            SendTimeoutBox.Text = string.IsNullOrEmpty(pr.SendTimeoutSeconds) ? "30" : pr.SendTimeoutSeconds;
             MaxTokensBox.Text = string.IsNullOrEmpty(pr.MaxTokens) ? "256" : pr.MaxTokens;
             TempBox.Text = pr.Temperature ?? "";
             StreamBox.IsChecked = pr.Stream;
@@ -367,6 +381,8 @@ namespace ApiTester
                 RememberKey = RememberKeyBox.IsChecked == true,
                 AutoFillUrl = AutoFillUrlBox.IsChecked == true,
                 Model = ModelBox.Text.Trim(),
+                ListModelsTimeoutSeconds = ListModelsTimeoutBox.Text.Trim(),
+                SendTimeoutSeconds = SendTimeoutBox.Text.Trim(),
                 MaxTokens = MaxTokensBox.Text.Trim(),
                 Temperature = TempBox.Text.Trim(),
                 Stream = StreamBox.IsChecked == true,
