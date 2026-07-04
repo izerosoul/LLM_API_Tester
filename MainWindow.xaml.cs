@@ -15,6 +15,7 @@ namespace ApiTester
         private readonly ApiClient _client = new();
         private static readonly string[] NoThinkingLevels = { "None" };
         private static readonly string[] OSeriesThinkingLevels = { "None", "Low", "Medium", "High", "XHigh" };
+        private static readonly string[] AnthropicThinkingLevels = { "None", "Low", "Medium", "High", "XHigh" };
         private static readonly string[] FullThinkingLevels = { "None", "Minimal", "Low", "Medium", "High", "XHigh" };
         private IApiProtocol[] _protocols = Array.Empty<IApiProtocol>();
         private List<Preset> _presets = new();
@@ -553,25 +554,33 @@ namespace ApiTester
 
         private static string[] ThinkingLevelsForModel(string model)
         {
-            string m = (model ?? "").Trim().ToLowerInvariant();
-            if (m.Length == 0) return NoThinkingLevels;
-            if (m.StartsWith("o1") || m.StartsWith("o3") || m.StartsWith("o4"))
+            string key = ModelKey(model);
+            if (key.Length == 0) return NoThinkingLevels;
+
+            if (key.StartsWith("o1") || key.StartsWith("o3") || key.StartsWith("o4"))
                 return OSeriesThinkingLevels;
-            if (m.StartsWith("gpt-5") || m.StartsWith("gpt-oss") || m.Contains("codex") ||
-                m.Contains("reasoning"))
+            if (key.StartsWith("gpt5") || key.StartsWith("gptoss") || key.Contains("codex") ||
+                key.Contains("reasoning") || key.StartsWith("glm") || key.Contains("minimax"))
                 return FullThinkingLevels;
+            if (key.Contains("opus48") || key.Contains("opus4") || key.Contains("claudeopus"))
+                return AnthropicThinkingLevels;
             return NoThinkingLevels;
         }
 
         private static string DefaultThinkingLevelForModel(string model)
         {
-            string m = (model ?? "").Trim().ToLowerInvariant();
-            if (m.Length == 0) return "None";
-            if (m.StartsWith("gpt-5") || m.StartsWith("o1") || m.StartsWith("o3") ||
-                m.StartsWith("o4") || m.StartsWith("gpt-oss") || m.Contains("codex") ||
-                m.Contains("reasoning"))
-                return "Medium";
-            return "None";
+            return ThinkingLevelsForModel(model).Length > 1 ? "Medium" : "None";
+        }
+
+        private static string ModelKey(string model)
+        {
+            var sb = new StringBuilder();
+            foreach (char ch in (model ?? "").ToLowerInvariant())
+            {
+                if ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9'))
+                    sb.Append(ch);
+            }
+            return sb.ToString();
         }
 
         private static string NormalizeThinkingLevel(string? level)

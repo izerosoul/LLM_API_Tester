@@ -54,7 +54,8 @@ bin\Release\ApiTester.exe
 - **Thinking**：思考等级。选择模型时会自动切换可选等级表并匹配默认值；OpenAI Chat / Responses 会把非 `None` 值作为 reasoning 参数发送，Claude / Gemini 忽略。
   - 普通模型：`None`
   - `o1` / `o3` / `o4`：`None` / `Low` / `Medium` / `High` / `XHigh`
-  - `gpt-5` / `gpt-oss` / `codex` / `reasoning`：`None` / `Minimal` / `Low` / `Medium` / `High` / `XHigh`
+  - `Opus 4.x` / `Claude Opus`：`None` / `Low` / `Medium` / `High` / `XHigh`
+  - `GPT 5.x` / `GPT OSS` / `Codex` / `GLM 5.x` / `Minimax M3` / `reasoning`：`None` / `Minimal` / `Low` / `Medium` / `High` / `XHigh`
 - **Max Output Tokens**：最大生成 token 数（默认 256）。
 - **Preset**：连接预设（可编辑下拉）。见第六节。
 - **Advanced**：默认折叠；展开后显示低频配置。折叠时如果有高级配置正在生效，会显示 `Advanced: ...` 摘要。
