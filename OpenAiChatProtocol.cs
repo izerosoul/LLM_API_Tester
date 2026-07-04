@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Text.Json;
 
 namespace ApiTester
 {
@@ -22,14 +21,16 @@ namespace ApiTester
         public List<string> ParseModelList(string body)
         {
             var list = new List<string>();
-            JsonElement root = JsonUtil.Parse(body);
-            if (root.ValueKind == JsonValueKind.Object
-                && root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            object root = JsonUtil.Parse(body);
+            var dict = JsonUtil.AsObject(root);
+            object dataObj;
+            var data = dict != null && dict.TryGetValue("data", out dataObj) ? JsonUtil.AsArray(dataObj) : null;
+            if (data != null)
             {
-                foreach (var item in data.EnumerateArray())
+                foreach (object item in data)
                 {
-                    if (item.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String)
-                        list.Add(id.GetString()!);
+                    string? id = JsonUtil.GetString(item, "id");
+                    if (id != null) list.Add(id);
                 }
             }
             list.Sort();
@@ -66,9 +67,11 @@ namespace ApiTester
         public ChatResult ParseChatResponse(string body)
         {
             var r = new ChatResult();
-            JsonElement root = JsonUtil.Parse(body);
-            if (root.TryGetProperty("choices", out var choices)
-                && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+            object root = JsonUtil.Parse(body);
+            var dict = JsonUtil.AsObject(root);
+            object choicesObj;
+            var choices = dict != null && dict.TryGetValue("choices", out choicesObj) ? JsonUtil.AsArray(choicesObj) : null;
+            if (choices != null && choices.Length > 0)
             {
                 r.Text = JsonUtil.GetString(choices[0], "message", "content") ?? "";
             }
@@ -84,10 +87,13 @@ namespace ApiTester
             string? data = SseUtil.ExtractData(rawEventBlock);
             if (data == null) return ev;
             if (data.Trim() == "[DONE]") { ev.IsDone = true; return ev; }
-            if (!JsonUtil.TryParse(data, out var root)) return ev;
+            object root;
+            if (!JsonUtil.TryParse(data, out root)) return ev;
 
-            if (root.TryGetProperty("choices", out var choices)
-                && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+            var dict = JsonUtil.AsObject(root);
+            object choicesObj;
+            var choices = dict != null && dict.TryGetValue("choices", out choicesObj) ? JsonUtil.AsArray(choicesObj) : null;
+            if (choices != null && choices.Length > 0)
             {
                 ev.TextDelta = JsonUtil.GetString(choices[0], "delta", "content");
             }

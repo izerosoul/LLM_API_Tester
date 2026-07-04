@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 
 namespace ApiTester
 {
@@ -24,13 +23,16 @@ namespace ApiTester
         {
             // 与 OpenAI 列模型结构相同
             var list = new List<string>();
-            JsonElement root = JsonUtil.Parse(body);
-            if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            object root = JsonUtil.Parse(body);
+            var dict = JsonUtil.AsObject(root);
+            object dataObj;
+            var data = dict != null && dict.TryGetValue("data", out dataObj) ? JsonUtil.AsArray(dataObj) : null;
+            if (data != null)
             {
-                foreach (var item in data.EnumerateArray())
+                foreach (object item in data)
                 {
-                    if (item.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String)
-                        list.Add(id.GetString()!);
+                    string? id = JsonUtil.GetString(item, "id");
+                    if (id != null) list.Add(id);
                 }
             }
             list.Sort();
@@ -63,7 +65,7 @@ namespace ApiTester
         public ChatResult ParseChatResponse(string body)
         {
             var r = new ChatResult();
-            JsonElement root = JsonUtil.Parse(body);
+            object root = JsonUtil.Parse(body);
 
             // 优先便捷字段 output_text；否则从 output[] 中 type=message 的 content[].text 拼接
             string? convenience = JsonUtil.GetString(root, "output_text");
@@ -71,22 +73,32 @@ namespace ApiTester
             {
                 r.Text = convenience!;
             }
-            else if (root.TryGetProperty("output", out var output) && output.ValueKind == JsonValueKind.Array)
+            else
             {
-                var sb = new StringBuilder();
-                foreach (var item in output.EnumerateArray())
+                var dict = JsonUtil.AsObject(root);
+                object outputObj;
+                var output = dict != null && dict.TryGetValue("output", out outputObj) ? JsonUtil.AsArray(outputObj) : null;
+                if (output != null)
                 {
-                    if (JsonUtil.GetString(item, "type") == "message"
-                        && item.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.Array)
+                    var sb = new StringBuilder();
+                    foreach (object item in output)
                     {
-                        foreach (var c in content.EnumerateArray())
+                        var itemDict = JsonUtil.AsObject(item);
+                        object contentObj;
+                        var content = itemDict != null && itemDict.TryGetValue("content", out contentObj)
+                            ? JsonUtil.AsArray(contentObj)
+                            : null;
+                        if (JsonUtil.GetString(item, "type") == "message" && content != null)
                         {
-                            if (c.TryGetProperty("text", out var te) && te.ValueKind == JsonValueKind.String)
-                                sb.Append(te.GetString());
+                            foreach (object c in content)
+                            {
+                                string? text = JsonUtil.GetString(c, "text");
+                                if (text != null) sb.Append(text);
+                            }
                         }
                     }
+                    r.Text = sb.ToString();
                 }
-                r.Text = sb.ToString();
             }
 
             r.PromptTokens = JsonUtil.GetInt(root, "usage", "input_tokens");
@@ -101,7 +113,8 @@ namespace ApiTester
             string? data = SseUtil.ExtractData(rawEventBlock);
             if (data == null) return ev;
             if (data.Trim() == "[DONE]") { ev.IsDone = true; return ev; }
-            if (!JsonUtil.TryParse(data, out var root)) return ev;
+            object root;
+            if (!JsonUtil.TryParse(data, out root)) return ev;
 
             switch (JsonUtil.GetString(root, "type"))
             {

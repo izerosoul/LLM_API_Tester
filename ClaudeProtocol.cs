@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 
 namespace ApiTester
 {
@@ -30,13 +29,16 @@ namespace ApiTester
         public List<string> ParseModelList(string body)
         {
             var list = new List<string>();
-            JsonElement root = JsonUtil.Parse(body);
-            if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            object root = JsonUtil.Parse(body);
+            var dict = JsonUtil.AsObject(root);
+            object dataObj;
+            var data = dict != null && dict.TryGetValue("data", out dataObj) ? JsonUtil.AsArray(dataObj) : null;
+            if (data != null)
             {
-                foreach (var item in data.EnumerateArray())
+                foreach (object item in data)
                 {
-                    if (item.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String)
-                        list.Add(id.GetString()!);
+                    string? id = JsonUtil.GetString(item, "id");
+                    if (id != null) list.Add(id);
                 }
             }
             list.Sort();
@@ -70,11 +72,14 @@ namespace ApiTester
         public ChatResult ParseChatResponse(string body)
         {
             var r = new ChatResult();
-            JsonElement root = JsonUtil.Parse(body);
-            if (root.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.Array)
+            object root = JsonUtil.Parse(body);
+            var dict = JsonUtil.AsObject(root);
+            object contentObj;
+            var content = dict != null && dict.TryGetValue("content", out contentObj) ? JsonUtil.AsArray(contentObj) : null;
+            if (content != null)
             {
                 var sb = new StringBuilder();
-                foreach (var blk in content.EnumerateArray())
+                foreach (object blk in content)
                 {
                     if (JsonUtil.GetString(blk, "type") == "text")
                     {
@@ -96,7 +101,8 @@ namespace ApiTester
             var ev = new SseEvent();
             string? data = SseUtil.ExtractData(rawEventBlock);
             if (data == null) return ev;
-            if (!JsonUtil.TryParse(data, out var root)) return ev;
+            object root;
+            if (!JsonUtil.TryParse(data, out root)) return ev;
 
             switch (JsonUtil.GetString(root, "type"))
             {

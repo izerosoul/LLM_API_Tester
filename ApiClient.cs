@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -36,6 +37,8 @@ namespace ApiTester
 
         private static HttpClient CreateClient()
         {
+            // .NET Framework 默认协议在旧系统上可能偏保守，这里显式启用 TLS 1.2。
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
             var c = new HttpClient();
             c.Timeout = TimeSpan.FromMinutes(5);
             return c;
@@ -73,7 +76,7 @@ namespace ApiTester
                 result.Status = (int)resp.StatusCode;
                 result.StatusText = resp.ReasonPhrase ?? "";
                 CopyHeaders(resp, result);
-                result.Body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                result.Body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -130,16 +133,16 @@ namespace ApiTester
                 if (!resp.IsSuccessStatusCode)
                 {
                     // 错误：读完整错误体返回
-                    result.Body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                    result.Body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
                 }
                 else
                 {
-                    using Stream s = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+                    using Stream s = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false);
                     using var reader = new StreamReader(s, Encoding.UTF8);
 
                     var block = new StringBuilder();
                     string? line;
-                    while ((line = await reader.ReadLineAsync(ct).ConfigureAwait(false)) != null)
+                    while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
                     {
                         if (line.Length == 0)
                         {

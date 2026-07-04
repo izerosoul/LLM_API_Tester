@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 
 namespace ApiTester
 {
@@ -32,13 +31,16 @@ namespace ApiTester
         public List<string> ParseModelList(string body)
         {
             var list = new List<string>();
-            JsonElement root = JsonUtil.Parse(body);
-            if (root.TryGetProperty("models", out var models) && models.ValueKind == JsonValueKind.Array)
+            object root = JsonUtil.Parse(body);
+            var dict = JsonUtil.AsObject(root);
+            object modelsObj;
+            var models = dict != null && dict.TryGetValue("models", out modelsObj) ? JsonUtil.AsArray(modelsObj) : null;
+            if (models != null)
             {
-                foreach (var m in models.EnumerateArray())
+                foreach (object m in models)
                 {
-                    if (m.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String)
-                        list.Add(n.GetString()!);   // 形如 "models/gemini-..."
+                    string? name = JsonUtil.GetString(m, "name");
+                    if (name != null) list.Add(name);   // 形如 "models/gemini-..."
                 }
             }
             list.Sort();
@@ -79,20 +81,31 @@ namespace ApiTester
         }
 
         // 从 candidates[0].content.parts[*].text 拼接文本
-        private static string ExtractText(JsonElement root)
+        private static string ExtractText(object root)
         {
             var sb = new StringBuilder();
-            if (root.TryGetProperty("candidates", out var cands)
-                && cands.ValueKind == JsonValueKind.Array && cands.GetArrayLength() > 0)
+            var dict = JsonUtil.AsObject(root);
+            object candsObj;
+            var cands = dict != null && dict.TryGetValue("candidates", out candsObj) ? JsonUtil.AsArray(candsObj) : null;
+            if (cands != null && cands.Length > 0)
             {
                 var first = cands[0];
-                if (first.TryGetProperty("content", out var content)
-                    && content.TryGetProperty("parts", out var parts) && parts.ValueKind == JsonValueKind.Array)
+                var content = JsonUtil.AsObject(first);
+                object contentObj;
+                object partsObj;
+                object[]? parts = null;
+                if (content != null && content.TryGetValue("content", out contentObj))
                 {
-                    foreach (var part in parts.EnumerateArray())
+                    var contentDict = JsonUtil.AsObject(contentObj);
+                    if (contentDict != null && contentDict.TryGetValue("parts", out partsObj))
+                        parts = JsonUtil.AsArray(partsObj);
+                }
+                if (parts != null)
+                {
+                    foreach (object part in parts)
                     {
-                        if (part.TryGetProperty("text", out var te) && te.ValueKind == JsonValueKind.String)
-                            sb.Append(te.GetString());
+                        string? text = JsonUtil.GetString(part, "text");
+                        if (text != null) sb.Append(text);
                     }
                 }
             }
@@ -102,7 +115,7 @@ namespace ApiTester
         public ChatResult ParseChatResponse(string body)
         {
             var r = new ChatResult();
-            JsonElement root = JsonUtil.Parse(body);
+            object root = JsonUtil.Parse(body);
             r.Text = ExtractText(root);
             r.PromptTokens = JsonUtil.GetInt(root, "usageMetadata", "promptTokenCount");
             r.CompletionTokens = JsonUtil.GetInt(root, "usageMetadata", "candidatesTokenCount");
@@ -115,7 +128,8 @@ namespace ApiTester
             var ev = new SseEvent();
             string? data = SseUtil.ExtractData(rawEventBlock);
             if (data == null) return ev;
-            if (!JsonUtil.TryParse(data, out var root)) return ev;
+            object root;
+            if (!JsonUtil.TryParse(data, out root)) return ev;
 
             string t = ExtractText(root);
             if (t.Length > 0) ev.TextDelta = t;
