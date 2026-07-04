@@ -1,7 +1,7 @@
 <Window x:Class="ApiTester.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="LLM API Tester" Height="720" Width="1060"
+        Title="LLM API Tester" Height="760" Width="1120"
         Icon="Assets\AppIcon.ico"
         WindowStartupLocation="CenterScreen"
         Background="#F4F7FB"
@@ -70,7 +70,7 @@
                 <!-- API Key + List Models -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">
                     <Label Content="API Key:" Width="74"/>
-                    <TextBox x:Name="KeyBox" Width="360"/>
+                    <TextBox x:Name="KeyBox" Width="420"/>
                     <Button x:Name="ListModelsBtn" Content="List Models" Width="100" Margin="12,0,0,0"/>
                 </StackPanel>
                 <!-- Model + thinking + output length -->
