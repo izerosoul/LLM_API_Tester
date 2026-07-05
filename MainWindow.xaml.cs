@@ -46,7 +46,7 @@ namespace ApiTester
         // ===== 事件挂接（集中在代码里，XAML 只负责布局）=====
         private void HookEvents()
         {
-            ProtocolBox.SelectionChanged += (s, e) => { ApplyProtocolDefaults(); UpdatePreview(true); UpdateAdvancedSummary(); };
+            ProtocolBox.SelectionChanged += (s, e) => { ApplyProtocolDefaults(); UpdatePreview(); UpdateAdvancedSummary(); };
 
             BaseUrlBox.TextChanged += (s, e) => UpdatePreview();
             KeyBox.TextChanged += (s, e) => UpdatePreview();
@@ -77,7 +77,7 @@ namespace ApiTester
             OpenAiJuiceBtn.Click += (s, e) => ToggleOpenAiJuiceMessage();
             RequestEditModeBox.Checked += (s, e) => SetRequestEditMode(true);
             RequestEditModeBox.Unchecked += (s, e) => SetRequestEditMode(false);
-            ShowListRequestBox.Unchecked += (s, e) => UpdatePreview(true);
+            ShowListRequestBox.Unchecked += (s, e) => UpdatePreview();
             FormatJsonBtn.Click += (s, e) => ResponseBox.Text = JsonUtil.Pretty(_lastResponse);
             RawRespBtn.Click += (s, e) => ResponseBox.Text = _lastResponse;
             CopyRespBtn.Click += (s, e) => CopyToClipboard(ResponseBox.Text);
@@ -134,10 +134,9 @@ namespace ApiTester
         }
 
         // ===== 请求预览 =====
-        private void UpdatePreview(bool force = false)
+        private void UpdatePreview()
         {
             if (_suspendPreview) return;
-            if (!force && RequestEditModeBox.IsChecked == true) return;
             var proto = CurrentProtocol();
             if (proto == null) return;
             try
@@ -646,7 +645,7 @@ namespace ApiTester
             }
             MessageBox.Focus();
             MessageBox.CaretIndex = MessageBox.Text.Length;
-            UpdatePreview(true);
+            UpdatePreview();
         }
 
         // ===== 预设 =====
@@ -685,7 +684,7 @@ namespace ApiTester
             _suspendPreview = false;
             ApplyThinkingProfileForModel(pr.ThinkingLevel);
             UpdateAdvancedVisibility();
-            UpdatePreview(true);
+            UpdatePreview();
             PresetStore.MarkLastUsed(name, _presets);
         }
 
@@ -778,7 +777,7 @@ namespace ApiTester
         {
             RequestBox.IsReadOnly = !editable;
             if (!editable && !_suspendPreview)
-                UpdatePreview(true);
+                UpdatePreview();
         }
 
         private void SetBusy(bool busy, string? status)
