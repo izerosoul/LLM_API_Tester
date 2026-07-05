@@ -46,7 +46,7 @@ namespace ApiTester
         // ===== 事件挂接（集中在代码里，XAML 只负责布局）=====
         private void HookEvents()
         {
-            ProtocolBox.SelectionChanged += (s, e) => { ApplyProtocolDefaults(); UpdatePreview(); UpdateAdvancedSummary(); };
+            ProtocolBox.SelectionChanged += (s, e) => { ApplyProtocolDefaults(); UpdatePreview(true); UpdateAdvancedSummary(); };
 
             BaseUrlBox.TextChanged += (s, e) => UpdatePreview();
             KeyBox.TextChanged += (s, e) => UpdatePreview();
@@ -77,6 +77,7 @@ namespace ApiTester
             OpenAiJuiceBtn.Click += (s, e) => ToggleOpenAiJuiceMessage();
             RequestEditModeBox.Checked += (s, e) => SetRequestEditMode(true);
             RequestEditModeBox.Unchecked += (s, e) => SetRequestEditMode(false);
+            ShowListRequestBox.Unchecked += (s, e) => UpdatePreview(true);
             FormatJsonBtn.Click += (s, e) => ResponseBox.Text = JsonUtil.Pretty(_lastResponse);
             RawRespBtn.Click += (s, e) => ResponseBox.Text = _lastResponse;
             CopyRespBtn.Click += (s, e) => CopyToClipboard(ResponseBox.Text);

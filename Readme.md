@@ -70,8 +70,8 @@ bin\Release\ApiTester.exe
 ### 中部
 - **Request (preview)**：发送前**实时预览**将要发出的完整 HTTP 请求包（请求行 + Host + 头 + body），Key 会按真实内容显示。
   - **Send** 发送 · **Stop** 取消进行中的请求 · **Copy** 复制预览文本。
-  - **Show List**：勾选后，点 **List Models** 时才把本次发送的模型列表 HTTP 包显示到 Request；默认不勾选。
   - **Editable**：勾选后可直接修改 Preview 内容；发送时会按编辑后的 HTTP 包发送。取消勾选后恢复自动生成预览。
+  - **Show List Request**：勾选后，点 **List Models** 时才把本次发送的模型列表 HTTP 包显示到 Request；默认不勾选，取消勾选会恢复普通 Message 发送预览。
 - **Response**：响应内容。
   - **Format JSON**：把响应体美化缩进。
   - **Raw**：显示原始响应体（未美化；流式时为原始 SSE 累积）。
