@@ -646,6 +646,7 @@ namespace ApiTester
             }
             MessageBox.Focus();
             MessageBox.CaretIndex = MessageBox.Text.Length;
+            UpdatePreview(true);
         }
 
         // ===== 预设 =====
