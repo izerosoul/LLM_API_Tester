@@ -318,6 +318,8 @@ namespace ApiTester
             try
             {
                 HttpRequestSpec spec = proto.BuildListModels(CurrentConfig());
+                if (ShowListRequestBox.IsChecked == true)
+                    RequestBox.Text = RenderRequest(spec);
                 res = await _client.SendAsync(spec,
                     TimeSpan.FromSeconds(ReadTimeoutSeconds(ListModelsTimeoutBox, 5)),
                     _cts.Token);
@@ -353,7 +355,8 @@ namespace ApiTester
                         ModelBox.SelectedIndex = 0;
                     _suspendPreview = false;
                     ApplyThinkingProfileForModel();
-                    UpdatePreview();
+                    if (ShowListRequestBox.IsChecked != true)
+                        UpdatePreview();
                     RememberActivePresetModel();
 
                     _lastResponse = res.Body;

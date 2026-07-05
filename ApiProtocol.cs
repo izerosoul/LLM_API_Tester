@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace ApiTester
@@ -111,6 +112,46 @@ namespace ApiTester
         public static string TrimBase(string baseUrl)
         {
             return (baseUrl ?? "").TrimEnd('/');
+        }
+
+        // 拼接端点；如果用户已在 Base URL 末尾写了 /v1 这类版本段，就不再重复追加。
+        public static string BuildUrl(string baseUrl, string endpoint)
+        {
+            string b = TrimBase(baseUrl);
+            string path = endpoint.StartsWith("/") ? endpoint : "/" + endpoint;
+            if (TryGetLeadingVersionSegment(path, out string versionSegment)
+                && BaseEndsWithVersionSegment(b, versionSegment))
+            {
+                path = path.Substring(versionSegment.Length + 1);
+                if (path.Length == 0) path = "/";
+            }
+            return b + path;
+        }
+
+        private static bool TryGetLeadingVersionSegment(string path, out string versionSegment)
+        {
+            versionSegment = "";
+            string value = path.StartsWith("/") ? path.Substring(1) : path;
+            int slash = value.IndexOf('/');
+            string firstSegment = slash >= 0 ? value.Substring(0, slash) : value;
+            if (firstSegment.Length < 2) return false;
+            if ((firstSegment[0] != 'v' && firstSegment[0] != 'V') || !char.IsDigit(firstSegment[1])) return false;
+
+            versionSegment = firstSegment;
+            return true;
+        }
+
+        private static bool BaseEndsWithVersionSegment(string baseUrl, string versionSegment)
+        {
+            string value = baseUrl;
+            int query = value.IndexOfAny(new[] { '?', '#' });
+            if (query >= 0) value = value.Substring(0, query);
+            value = value.TrimEnd('/');
+
+            int slash = value.LastIndexOf('/');
+            if (slash < 0 || slash == value.Length - 1) return false;
+            string lastSegment = value.Substring(slash + 1);
+            return string.Equals(lastSegment, versionSegment, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

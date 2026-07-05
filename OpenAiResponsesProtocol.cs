@@ -13,8 +13,7 @@ namespace ApiTester
 
         public HttpRequestSpec BuildListModels(ApiConfig cfg)
         {
-            string b = ProtocolUtil.TrimBase(cfg.BaseUrl);
-            var spec = new HttpRequestSpec { Method = "GET", Url = b + "/v1/models" };
+            var spec = new HttpRequestSpec { Method = "GET", Url = ProtocolUtil.BuildUrl(cfg.BaseUrl, "/v1/models") };
             spec.Headers["Authorization"] = "Bearer " + cfg.ApiKey;
             return spec;
         }
@@ -41,7 +40,6 @@ namespace ApiTester
 
         public HttpRequestSpec BuildChat(ApiConfig cfg, ChatParams p, bool stream)
         {
-            string b = ProtocolUtil.TrimBase(cfg.BaseUrl);
             var body = new
             {
                 model = cfg.Model,
@@ -55,7 +53,7 @@ namespace ApiTester
             var spec = new HttpRequestSpec
             {
                 Method = "POST",
-                Url = b + "/v1/responses",
+                Url = ProtocolUtil.BuildUrl(cfg.BaseUrl, "/v1/responses"),
                 Body = JsonUtil.Serialize(body),
                 IsStream = stream
             };

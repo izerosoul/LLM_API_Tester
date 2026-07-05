@@ -31,7 +31,7 @@ bin\Release\ApiTester.exe
 ## 三、快速上手（5 步）
 
 1. 选 **Protocol**（协议）。
-2. 填 **Base URL**（接口根地址）。想让它随协议自动填默认地址，就勾右侧 **Auto-fill URL**（见下）。
+2. 填 **Base URL**（接口根地址）。想让它随协议自动填官方默认地址，就勾右侧 **Official URL**（见下）。
 3. 填 **API Key**（明文显示，方便核对/粘贴）。
 4. 点 **List Models** 拉取模型 → 在 **Model** 下拉里选一个。
 5. 在 **Message** 写内容（默认 `Hello`），点 **Send**。想看流式输出就展开 **Advanced** 后勾 **Stream**。
@@ -42,8 +42,8 @@ bin\Release\ApiTester.exe
 
 ### 顶部
 - **Protocol**：协议。切换会清空 Model 列表；选 Claude 时 **Temperature** 会被禁用（该模型不接受 temperature）。
-- **Base URL**：API 根地址，如 `https://api.openai.com`。工具会自动补该协议对应的路径（如 `/v1/chat/completions`），你只填到域名即可。
-- **Auto-fill URL**（勾选框）：
+- **Base URL**：API 根地址，如 `https://api.openai.com`。工具会自动补该协议对应的路径（如 `/v1/chat/completions`）；如果你已经填到 `/v1` / `/v1beta`，不会重复追加版本段。
+- **Official URL**（勾选框）：
   - **勾选**：切换协议时自动把 Base URL 填成该协议默认地址（勾上的当下也会立即填当前协议默认）。
   - **不勾（默认）**：切换协议**不动** Base URL——方便你填自己的中转/自建/本地地址。
   - 程序启动时**默认不勾**，因此 **Base URL 初始为空**。
@@ -70,6 +70,7 @@ bin\Release\ApiTester.exe
 ### 中部
 - **Request (preview)**：发送前**实时预览**将要发出的完整 HTTP 请求包（请求行 + Host + 头 + body），Key 会按真实内容显示。
   - **Send** 发送 · **Stop** 取消进行中的请求 · **Copy** 复制预览文本。
+  - **Show List**：勾选后，点 **List Models** 时才把本次发送的模型列表 HTTP 包显示到 Request；默认不勾选。
   - **Editable**：勾选后可直接修改 Preview 内容；发送时会按编辑后的 HTTP 包发送。取消勾选后恢复自动生成预览。
 - **Response**：响应内容。
   - **Format JSON**：把响应体美化缩进。

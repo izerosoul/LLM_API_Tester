@@ -65,7 +65,7 @@
                     <ComboBox x:Name="ProtocolBox" Width="220"/>
                     <Label Content="Base URL:" Width="74" Margin="12,0,0,0"/>
                     <TextBox x:Name="BaseUrlBox" Width="320"/>
-                    <CheckBox x:Name="AutoFillUrlBox" Content="Auto-fill URL" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    <CheckBox x:Name="AutoFillUrlBox" Content="Official URL" VerticalAlignment="Center" Margin="10,0,0,0"/>
                 </StackPanel>
                 <!-- API Key + List Models -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">
@@ -148,6 +148,7 @@
                     <Button x:Name="SendBtn" Content="Send" Width="80" Margin="14,0,0,0"/>
                     <Button x:Name="StopBtn" Content="Stop" Width="60" Margin="6,0,0,0" IsEnabled="False"/>
                     <Button x:Name="CopyReqBtn" Content="Copy" Width="60" Margin="6,0,0,0"/>
+                    <CheckBox x:Name="ShowListRequestBox" Content="Show List" VerticalAlignment="Center" Margin="10,0,0,0"/>
                     <CheckBox x:Name="RequestEditModeBox" Content="Editable" VerticalAlignment="Center" Margin="10,0,0,0"/>
                 </StackPanel>
                 <TextBox x:Name="RequestBox" IsReadOnly="True" FontFamily="Consolas" Style="{StaticResource EditorBoxStyle}"

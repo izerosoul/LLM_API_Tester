@@ -18,11 +18,10 @@ namespace ApiTester
 
         public HttpRequestSpec BuildListModels(ApiConfig cfg)
         {
-            string b = ProtocolUtil.TrimBase(cfg.BaseUrl);
             var spec = new HttpRequestSpec
             {
                 Method = "GET",
-                Url = b + "/v1beta/models?key=" + Uri.EscapeDataString(cfg.ApiKey)
+                Url = ProtocolUtil.BuildUrl(cfg.BaseUrl, "/v1beta/models") + "?key=" + Uri.EscapeDataString(cfg.ApiKey)
             };
             spec.Headers["x-goog-api-key"] = cfg.ApiKey;
             return spec;
@@ -49,10 +48,10 @@ namespace ApiTester
 
         public HttpRequestSpec BuildChat(ApiConfig cfg, ChatParams p, bool stream)
         {
-            string b = ProtocolUtil.TrimBase(cfg.BaseUrl);
             string model = ModelId(cfg.Model);
             string verb = stream ? "streamGenerateContent" : "generateContent";
-            string url = b + "/v1beta/models/" + model + ":" + verb + "?key=" + Uri.EscapeDataString(cfg.ApiKey);
+            string url = ProtocolUtil.BuildUrl(cfg.BaseUrl, "/v1beta/models/" + model + ":" + verb)
+                + "?key=" + Uri.EscapeDataString(cfg.ApiKey);
             if (stream) url += "&alt=sse";
 
             var contents = new List<object>
