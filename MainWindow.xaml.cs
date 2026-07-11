@@ -22,6 +22,7 @@ namespace ApiTester
         private CancellationTokenSource? _cts;
         private string _activePresetName = "";
         private string _lastResponse = "";   // 最近一次响应的原始体（供 Raw / Format JSON 切换）
+        private string _lastRawResponse = ""; // 最近一次响应的完整 HTTP 包（状态行 + 头 + body）
         private bool _suspendPreview;         // 批量改控件时抑制预览刷新
         private bool _openAiJuiceMode;        // OpenAI Juice 按钮当前是否处于重置状态
 
@@ -79,7 +80,7 @@ namespace ApiTester
             RequestEditModeBox.Unchecked += (s, e) => SetRequestEditMode(false);
             ShowListRequestBox.Unchecked += (s, e) => UpdatePreview();
             FormatJsonBtn.Click += (s, e) => ResponseBox.Text = JsonUtil.Pretty(_lastResponse);
-            RawRespBtn.Click += (s, e) => ResponseBox.Text = _lastResponse;
+            RawRespBtn.Click += (s, e) => ResponseBox.Text = string.IsNullOrEmpty(_lastRawResponse) ? _lastResponse : _lastRawResponse;
             CopyRespBtn.Click += (s, e) => CopyToClipboard(ResponseBox.Text);
             SavePresetBtn.Click += (s, e) => OnSavePreset();
             DelPresetBtn.Click += (s, e) => OnDelPreset();
@@ -172,6 +173,24 @@ namespace ApiTester
             sb.Append("\r\n");
             if (spec.Body != null)
                 sb.Append(IsDisplayableText(spec.Body) ? JsonUtil.Pretty(spec.Body) : "(binary content cannot be displayed)");
+            return sb.ToString();
+        }
+
+        // 把响应拼成接近网络传输形态的完整 HTTP 报文。
+        private static string RenderResponse(HttpResult res)
+        {
+            if (res.Error != null && res.Status == 0)
+                return "Request error:\r\n" + res.Error.Message;
+
+            var sb = new StringBuilder();
+            string statusText = string.IsNullOrWhiteSpace(res.StatusText) ? "" : " " + res.StatusText;
+            sb.Append("HTTP/").Append(string.IsNullOrWhiteSpace(res.HttpVersion) ? "1.1" : res.HttpVersion)
+              .Append(' ').Append(res.Status).Append(statusText).Append("\r\n");
+            foreach (var kv in res.Headers)
+                sb.Append(kv.Key).Append(": ").Append(kv.Value).Append("\r\n");
+            sb.Append("\r\n");
+            if (!string.IsNullOrEmpty(res.Body))
+                sb.Append(IsDisplayableText(res.Body) ? res.Body : "(binary content cannot be displayed)");
             return sb.ToString();
         }
 
@@ -314,6 +333,8 @@ namespace ApiTester
             if (proto == null) return;
             SetBusy(true, "Listing models...");
             _cts = new CancellationTokenSource();
+            _lastResponse = "";
+            _lastRawResponse = "";
             HttpResult res = new();
             try
             {
@@ -326,6 +347,7 @@ namespace ApiTester
 
                 if (res.Error != null)
                 {
+                    _lastRawResponse = RenderResponse(res);
                     StatusText.Text = res.Cancelled ? "Status: Cancelled" : "Status: ERROR";
                     if (!res.Cancelled) ResponseBox.Text = "Request error:\n" + res.Error.Message;
                 }
@@ -333,6 +355,7 @@ namespace ApiTester
                 {
                     StatusText.Text = $"Status: {res.Status} {res.StatusText}";
                     _lastResponse = res.Body;
+                    _lastRawResponse = RenderResponse(res);
                     ResponseBox.Text = JsonUtil.Pretty(res.Body);
                 }
                 else
@@ -360,6 +383,7 @@ namespace ApiTester
                     RememberActivePresetModel();
 
                     _lastResponse = res.Body;
+                    _lastRawResponse = RenderResponse(res);
                     ResponseBox.Text = $"// {models.Count} model(s)\n" + string.Join("\n", models);
                 }
             }
@@ -399,6 +423,7 @@ namespace ApiTester
             }
             ResponseBox.Clear();
             _lastResponse = "";
+            _lastRawResponse = "";
             TtftText.Text = "TTFT: -";
             TokensText.Text = "Tokens: -";
 
@@ -421,10 +446,12 @@ namespace ApiTester
                     res = await _client.SendAsync(spec, timeout, _cts.Token);
                 }
                 _lastResponse = res.Body;
+                _lastRawResponse = RenderResponse(res);
             }
             catch (Exception ex)
             {
                 res = new HttpResult { Error = ex };
+                _lastRawResponse = RenderResponse(res);
             }
             finally
             {

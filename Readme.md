@@ -74,7 +74,7 @@ bin\Release\ApiTester.exe
   - **Show List Request**：勾选后，点 **List Models** 时才把本次发送的模型列表 HTTP 包显示到 Request；默认不勾选，取消勾选会恢复普通 Message 发送预览。
 - **Response**：响应内容。
   - **Format JSON**：把响应体美化缩进。
-  - **Raw**：显示原始响应体（未美化；流式时为原始 SSE 累积）。
+  - **Raw**：显示完整 HTTP 响应包（状态行 + 返回头 + body；流式时 body 为原始 SSE 累积）。
   - **Copy**：复制响应文本。
 
 ### 底部状态栏

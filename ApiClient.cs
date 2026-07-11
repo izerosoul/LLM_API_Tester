@@ -15,6 +15,7 @@ namespace ApiTester
     {
         public int Status;
         public string StatusText = "";
+        public string HttpVersion = "1.1";
         public string Body = "";
         public long ElapsedMs;
         public long TtftMs;                 // 首字节耗时（非流式 = 总耗时）
@@ -109,6 +110,7 @@ namespace ApiTester
                     await Http.SendAsync(req, HttpCompletionOption.ResponseContentRead, linkedCts.Token).ConfigureAwait(false);
                 result.Status = (int)resp.StatusCode;
                 result.StatusText = resp.ReasonPhrase ?? "";
+                result.HttpVersion = resp.Version?.ToString() ?? "1.1";
                 CopyHeaders(resp, result);
                 result.Body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
@@ -166,6 +168,7 @@ namespace ApiTester
                     await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, requestToken).ConfigureAwait(false);
                 result.Status = (int)resp.StatusCode;
                 result.StatusText = resp.ReasonPhrase ?? "";
+                result.HttpVersion = resp.Version?.ToString() ?? "1.1";
                 CopyHeaders(resp, result);
 
                 if (!resp.IsSuccessStatusCode)
