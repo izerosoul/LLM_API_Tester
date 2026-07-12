@@ -31,6 +31,25 @@ namespace ApiTester
         public string Model = "";
     }
 
+    public enum ProxyKind
+    {
+        None,
+        Http,
+        Socks5
+    }
+
+    // 请求代理配置；用户名密码均可为空。
+    public sealed class ApiProxyConfig
+    {
+        public ProxyKind Kind = ProxyKind.None;
+        public string Host = "";
+        public int Port;
+        public string User = "";
+        public string Password = "";
+
+        public bool Enabled => Kind != ProxyKind.None;
+    }
+
     // 对话参数
     public sealed class ChatParams
     {

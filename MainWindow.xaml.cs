@@ -35,6 +35,8 @@ namespace ApiTester
             ProtocolBox.DisplayMemberPath = "DisplayName";
             ThinkingBox.ItemsSource = NoThinkingLevels;
             ThinkingBox.SelectedItem = "None";
+            ProxyTypeBox.ItemsSource = new[] { "None", "HTTP", "SOCKS5" };
+            ProxyTypeBox.SelectedItem = "None";
 
             HookEvents();
             LoadPresetsToBox();
@@ -64,6 +66,11 @@ namespace ApiTester
             TempBox.TextChanged += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
             ListModelsTimeoutBox.TextChanged += (s, e) => UpdateAdvancedSummary();
             SendTimeoutBox.TextChanged += (s, e) => UpdateAdvancedSummary();
+            ProxyTypeBox.SelectionChanged += (s, e) => { UpdateProxyInputState(); UpdateAdvancedSummary(); };
+            ProxyHostBox.TextChanged += (s, e) => UpdateAdvancedSummary();
+            ProxyPortBox.TextChanged += (s, e) => UpdateAdvancedSummary();
+            ProxyUserBox.TextChanged += (s, e) => UpdateAdvancedSummary();
+            ProxyPasswordBox.TextChanged += (s, e) => UpdateAdvancedSummary();
             SystemBox.TextChanged += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
             MessageBox.TextChanged += (s, e) => UpdatePreview();
             StreamBox.Checked += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
@@ -131,6 +138,24 @@ namespace ApiTester
                 MaxTokens = maxTok,
                 Temperature = temp,
                 ReasoningEffort = ResolveReasoningEffort(proto, ThinkingBox.SelectedItem as string)
+            };
+        }
+
+        private ApiProxyConfig CurrentProxyConfig()
+        {
+            string type = (ProxyTypeBox.SelectedItem as string ?? "None").Trim();
+            ProxyKind kind = ProxyKind.None;
+            if (string.Equals(type, "HTTP", StringComparison.OrdinalIgnoreCase)) kind = ProxyKind.Http;
+            else if (string.Equals(type, "SOCKS5", StringComparison.OrdinalIgnoreCase)) kind = ProxyKind.Socks5;
+
+            int.TryParse(ProxyPortBox.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int port);
+            return new ApiProxyConfig
+            {
+                Kind = kind,
+                Host = ProxyHostBox.Text.Trim(),
+                Port = port,
+                User = ProxyUserBox.Text,
+                Password = ProxyPasswordBox.Text
             };
         }
 
@@ -343,7 +368,8 @@ namespace ApiTester
                     RequestBox.Text = RenderRequest(spec);
                 res = await _client.SendAsync(spec,
                     TimeSpan.FromSeconds(ReadTimeoutSeconds(ListModelsTimeoutBox, 5)),
-                    _cts.Token);
+                    _cts.Token,
+                    CurrentProxyConfig());
 
                 if (res.Error != null)
                 {
@@ -439,11 +465,12 @@ namespace ApiTester
                         ttft => Dispatcher.InvokeAsync(() => TtftText.Text = $"TTFT: {ttft} ms"),
                         text => Dispatcher.InvokeAsync(() => { ResponseBox.AppendText(text); ResponseBox.ScrollToEnd(); }),
                         timeout,
-                        _cts.Token);
+                        _cts.Token,
+                        CurrentProxyConfig());
                 }
                 else
                 {
-                    res = await _client.SendAsync(spec, timeout, _cts.Token);
+                    res = await _client.SendAsync(spec, timeout, _cts.Token, CurrentProxyConfig());
                 }
                 _lastResponse = res.Body;
                 _lastRawResponse = RenderResponse(res);
@@ -519,7 +546,17 @@ namespace ApiTester
             bool show = AdvancedBox.IsChecked == true;
             AdvancedPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
             UpdateMessageBoxMode(show);
+            UpdateProxyInputState();
             UpdateAdvancedSummary();
+        }
+
+        private void UpdateProxyInputState()
+        {
+            bool enabled = !string.Equals(ProxyTypeBox.SelectedItem as string, "None", StringComparison.OrdinalIgnoreCase);
+            ProxyHostBox.IsEnabled = enabled;
+            ProxyPortBox.IsEnabled = enabled;
+            ProxyUserBox.IsEnabled = enabled;
+            ProxyPasswordBox.IsEnabled = enabled;
         }
 
         private void UpdateMessageBoxMode(bool advanced)
@@ -544,6 +581,8 @@ namespace ApiTester
             if (StreamBox.IsChecked == true) active.Add("Stream");
             if (HasNonDefaultTimeout(ListModelsTimeoutBox, 5)) active.Add("List timeout");
             if (HasNonDefaultTimeout(SendTimeoutBox, 30)) active.Add("Send timeout");
+            if (!string.Equals(ProxyTypeBox.SelectedItem as string, "None", StringComparison.OrdinalIgnoreCase))
+                active.Add("Proxy");
             if (!string.IsNullOrWhiteSpace(SystemBox.Text)) active.Add("System");
 
             if (active.Count == 0)
@@ -632,6 +671,14 @@ namespace ApiTester
             return "None";
         }
 
+        private static string NormalizeProxyType(string? type)
+        {
+            string value = (type ?? "None").Trim();
+            if (string.Equals(value, "HTTP", StringComparison.OrdinalIgnoreCase)) return "HTTP";
+            if (string.Equals(value, "SOCKS5", StringComparison.OrdinalIgnoreCase)) return "SOCKS5";
+            return "None";
+        }
+
         private static string? ResolveReasoningEffort(IApiProtocol? proto, string? level)
         {
             if (proto == null) return null;
@@ -705,12 +752,18 @@ namespace ApiTester
             TempBox.Text = pr.Temperature ?? "";
             StreamBox.IsChecked = pr.Stream;
             SystemBox.Text = pr.System ?? "";
+            ProxyTypeBox.SelectedItem = NormalizeProxyType(pr.ProxyType);
+            ProxyHostBox.Text = pr.ProxyHost ?? "";
+            ProxyPortBox.Text = pr.ProxyPort ?? "";
+            ProxyUserBox.Text = pr.ProxyUser ?? "";
+            ProxyPasswordBox.Text = pr.ProxyPassword ?? "";
             RequestEditModeBox.IsChecked = pr.RequestPreviewEditable;
             AdvancedBox.IsChecked = pr.AdvancedVisible;
             _activePresetName = name;
             _suspendPreview = false;
             ApplyThinkingProfileForModel(pr.ThinkingLevel);
             UpdateAdvancedVisibility();
+            UpdateProxyInputState();
             UpdatePreview();
             PresetStore.MarkLastUsed(name, _presets);
         }
@@ -735,6 +788,11 @@ namespace ApiTester
                 Temperature = TempBox.Text.Trim(),
                 Stream = StreamBox.IsChecked == true,
                 System = SystemBox.Text,
+                ProxyType = NormalizeProxyType(ProxyTypeBox.SelectedItem as string),
+                ProxyHost = ProxyHostBox.Text.Trim(),
+                ProxyPort = ProxyPortBox.Text.Trim(),
+                ProxyUser = ProxyUserBox.Text,
+                ProxyPassword = ProxyPasswordBox.Text,
                 RequestPreviewEditable = RequestEditModeBox.IsChecked == true,
                 AdvancedVisible = AdvancedBox.IsChecked == true
             };

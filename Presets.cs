@@ -22,6 +22,11 @@ namespace ApiTester
         public string Temperature { get; set; } = "";
         public bool Stream { get; set; }
         public string System { get; set; } = "";
+        public string ProxyType { get; set; } = "None";
+        public string ProxyHost { get; set; } = "";
+        public string ProxyPort { get; set; } = "";
+        public string ProxyUser { get; set; } = "";
+        public string ProxyPassword { get; set; } = "";
         public bool RequestPreviewEditable { get; set; }
         public bool AdvancedVisible { get; set; }
     }

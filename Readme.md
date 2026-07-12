@@ -63,6 +63,7 @@ bin\Release\ApiTester.exe
 - **Stream (SSE)**：勾选后走流式，响应实时逐块追加显示，并统计首字耗时 TTFT。
 - **List Models Timeout**：List Models 请求超时秒数，默认 5 秒。
 - **Send Timeout**：Send 请求超时秒数，默认 30 秒；流式请求也会按该值限制总耗时。
+- **Proxy**：请求代理。`None` 为直连；`HTTP` 使用 HTTP/HTTPS 代理；`SOCKS5` 使用内置 SOCKS5 连接层。Host / Port 必填，User / Pass 可留空。
 - **System**：system 提示（可留空）。
 - **Message**：要发送的用户消息（默认 `Hello`），支持粘贴多行文本；Advanced 展开时显示为多行输入框。
 - **OpenAI Juice**：把内置的 OpenAI Juice 测试 XML 填入 Message。
@@ -88,7 +89,7 @@ bin\Release\ApiTester.exe
 ## 五、非流式 vs 流式
 
 - **非流式**（不勾 Stream）：一次性拿到完整响应，响应框显示**美化后的 JSON**，Token 从响应里解析。
-- **流式**（勾 Stream）：响应框**实时追加**文本，状态栏显示 **TTFT**；点 **Raw** 可看原始 SSE。
+- **流式**（勾 Stream）：响应框**实时追加**文本，状态栏显示 **TTFT**；点 **Raw** 可看完整 HTTP 响应包，body 为原始 SSE。
 
 ---
 
@@ -97,7 +98,7 @@ bin\Release\ApiTester.exe
 **预设（Preset）** = 保存一套界面配置，方便下次一键切换。
 
 - **保存**：在 Preset 框输入一个名字，点 **Save**。
-- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、Thinking、timeout、token、temperature、stream、system、Advanced 展开状态等界面内容；Message 不会随 Preset 保存或回填。
+- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、Thinking、timeout、token、temperature、stream、proxy、system、Advanced 展开状态等界面内容；Message 不会随 Preset 保存或回填。
 - **删除**：Preset 框显示某名字时点 **Delete**。
 - 切换 Model 时，当前 Preset 会只记住最后选择/输入的模型 ID，不保存完整模型列表。
 
@@ -120,6 +121,11 @@ bin\Release\ApiTester.json
       "ThinkingLevel": "None",
       "ListModelsTimeoutSeconds": "5",
       "SendTimeoutSeconds": "30",
+      "ProxyType": "None",
+      "ProxyHost": "",
+      "ProxyPort": "",
+      "ProxyUser": "",
+      "ProxyPassword": "",
       "AdvancedVisible": false
     }
   ]
