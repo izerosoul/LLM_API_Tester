@@ -27,8 +27,6 @@ namespace ApiTester
         public string ProxyPort { get; set; } = "";
         public string ProxyUser { get; set; } = "";
         public string ProxyPassword { get; set; } = "";
-        public bool RequestPreviewEditable { get; set; }
-        public bool AdvancedVisible { get; set; }
     }
 
     // 程序配置：与 EXE 同目录、同名 JSON，例如 ApiTester.json。

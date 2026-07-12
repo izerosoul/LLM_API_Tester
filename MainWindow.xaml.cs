@@ -24,7 +24,10 @@ namespace ApiTester
         private string _lastResponse = "";   // 最近一次响应的原始体（供 Raw / Format JSON 切换）
         private string _lastRawResponse = ""; // 最近一次响应的完整 HTTP 包（状态行 + 头 + body）
         private bool _suspendPreview;         // 批量改控件时抑制预览刷新
+        private bool _suspendRequestDirty;    // 自动刷新 Request 时不标记为用户编辑
+        private bool _requestEdited;          // Editable 下用户是否手动改过 Request
         private bool _openAiJuiceMode;        // OpenAI Juice 按钮当前是否处于重置状态
+        private bool _busy;                   // 防止连续点击导致请求状态互相覆盖
 
         public MainWindow()
         {
@@ -83,6 +86,7 @@ namespace ApiTester
             StopBtn.Click += (s, e) => _cts?.Cancel();
             CopyReqBtn.Click += (s, e) => CopyToClipboard(RequestBox.Text);
             OpenAiJuiceBtn.Click += (s, e) => ToggleOpenAiJuiceMessage();
+            RequestBox.TextChanged += (s, e) => { if (!_suspendRequestDirty && RequestEditModeBox.IsChecked == true) _requestEdited = true; };
             RequestEditModeBox.Checked += (s, e) => SetRequestEditMode(true);
             RequestEditModeBox.Unchecked += (s, e) => SetRequestEditMode(false);
             ShowListRequestBox.Unchecked += (s, e) => UpdatePreview();
@@ -168,11 +172,25 @@ namespace ApiTester
             try
             {
                 var spec = proto.BuildChat(CurrentConfig(), CurrentParams(), StreamBox.IsChecked == true);
-                RequestBox.Text = RenderRequest(spec);
+                SetRequestText(RenderRequest(spec));
             }
             catch (Exception ex)
             {
-                RequestBox.Text = "(preview error) " + ex.Message;
+                SetRequestText("(preview error) " + ex.Message);
+            }
+        }
+
+        private void SetRequestText(string text)
+        {
+            _suspendRequestDirty = true;
+            try
+            {
+                RequestBox.Text = text;
+                _requestEdited = false;
+            }
+            finally
+            {
+                _suspendRequestDirty = false;
             }
         }
 
@@ -356,6 +374,7 @@ namespace ApiTester
         {
             var proto = CurrentProtocol();
             if (proto == null) return;
+            if (_busy) return;
             SetBusy(true, "Listing models...");
             _cts = new CancellationTokenSource();
             _lastResponse = "";
@@ -365,7 +384,7 @@ namespace ApiTester
             {
                 HttpRequestSpec spec = proto.BuildListModels(CurrentConfig());
                 if (ShowListRequestBox.IsChecked == true)
-                    RequestBox.Text = RenderRequest(spec);
+                    SetRequestText(RenderRequest(spec));
                 res = await _client.SendAsync(spec,
                     TimeSpan.FromSeconds(ReadTimeoutSeconds(ListModelsTimeoutBox, 5)),
                     _cts.Token,
@@ -421,6 +440,8 @@ namespace ApiTester
             finally
             {
                 TimeText.Text = $"Time: {res.ElapsedMs} ms";
+                _cts?.Dispose();
+                _cts = null;
                 SetBusy(false, null);
             }
         }
@@ -430,10 +451,11 @@ namespace ApiTester
         {
             var proto = CurrentProtocol();
             if (proto == null) return;
+            if (_busy) return;
             bool stream = StreamBox.IsChecked == true;
 
             HttpRequestSpec spec;
-            if (RequestEditModeBox.IsChecked == true)
+            if (RequestEditModeBox.IsChecked == true && _requestEdited)
             {
                 if (!TryParseRequestPreview(RequestBox.Text, CurrentConfig().BaseUrl, stream, out spec, out string error))
                 {
@@ -445,7 +467,7 @@ namespace ApiTester
             else
             {
                 spec = proto.BuildChat(CurrentConfig(), CurrentParams(), stream);
-                RequestBox.Text = RenderRequest(spec);
+                SetRequestText(RenderRequest(spec));
             }
             ResponseBox.Clear();
             _lastResponse = "";
@@ -482,8 +504,21 @@ namespace ApiTester
             }
             finally
             {
-                Finish(res, proto, stream);
-                SetBusy(false, null);
+                try
+                {
+                    Finish(res, proto, stream);
+                }
+                catch (Exception ex)
+                {
+                    StatusText.Text = "Status: ERROR";
+                    ResponseBox.Text = "Display error:\n" + ex.Message;
+                }
+                finally
+                {
+                    _cts?.Dispose();
+                    _cts = null;
+                    SetBusy(false, null);
+                }
             }
         }
 
@@ -757,8 +792,6 @@ namespace ApiTester
             ProxyPortBox.Text = pr.ProxyPort ?? "";
             ProxyUserBox.Text = pr.ProxyUser ?? "";
             ProxyPasswordBox.Text = pr.ProxyPassword ?? "";
-            RequestEditModeBox.IsChecked = pr.RequestPreviewEditable;
-            AdvancedBox.IsChecked = pr.AdvancedVisible;
             _activePresetName = name;
             _suspendPreview = false;
             ApplyThinkingProfileForModel(pr.ThinkingLevel);
@@ -792,9 +825,7 @@ namespace ApiTester
                 ProxyHost = ProxyHostBox.Text.Trim(),
                 ProxyPort = ProxyPortBox.Text.Trim(),
                 ProxyUser = ProxyUserBox.Text,
-                ProxyPassword = ProxyPasswordBox.Text,
-                RequestPreviewEditable = RequestEditModeBox.IsChecked == true,
-                AdvancedVisible = AdvancedBox.IsChecked == true
+                ProxyPassword = ProxyPasswordBox.Text
             };
             int idx = _presets.FindIndex(x => x.Name == name);
             if (idx >= 0) _presets[idx] = pr; else _presets.Add(pr);
@@ -861,12 +892,14 @@ namespace ApiTester
         private void SetRequestEditMode(bool editable)
         {
             RequestBox.IsReadOnly = !editable;
+            _requestEdited = false;
             if (!editable && !_suspendPreview)
                 UpdatePreview();
         }
 
         private void SetBusy(bool busy, string? status)
         {
+            _busy = busy;
             ListModelsBtn.IsEnabled = !busy;
             SendBtn.IsEnabled = !busy;
             StopBtn.IsEnabled = busy;

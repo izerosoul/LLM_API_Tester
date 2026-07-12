@@ -71,7 +71,7 @@ bin\Release\ApiTester.exe
 ### 中部
 - **Request (preview)**：发送前**实时预览**将要发出的完整 HTTP 请求包（请求行 + Host + 头 + body），Key 会按真实内容显示。
   - **Send** 发送 · **Stop** 取消进行中的请求 · **Copy** 复制预览文本。
-  - **Editable**：勾选后可直接修改 Preview 内容；发送时会按编辑后的 HTTP 包发送。修改上方配置项会重新生成 Preview。
+  - **Editable**：勾选后可直接修改 Preview 内容；只有手动改过 Preview 后，发送时才会按编辑后的 HTTP 包发送。修改上方配置项会重新生成 Preview。
   - **Show List Request**：勾选后，点 **List Models** 时才把本次发送的模型列表 HTTP 包显示到 Request；默认不勾选，取消勾选会恢复普通 Message 发送预览。
 - **Response**：响应内容。
   - **Format JSON**：把响应体美化缩进。
@@ -98,7 +98,7 @@ bin\Release\ApiTester.exe
 **预设（Preset）** = 保存一套界面配置，方便下次一键切换。
 
 - **保存**：在 Preset 框输入一个名字，点 **Save**。
-- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、Thinking、timeout、token、temperature、stream、proxy、system、Advanced 展开状态等界面内容；Message 不会随 Preset 保存或回填。
+- **加载**：在 Preset 下拉里选中某名字 → 自动回填协议、Base URL、API Key、Model、Thinking、timeout、token、temperature、stream、proxy、system 等界面内容；Message、Advanced 展开状态、Editable 状态不会随 Preset 保存或回填。
 - **删除**：Preset 框显示某名字时点 **Delete**。
 - 切换 Model 时，当前 Preset 会只记住最后选择/输入的模型 ID，不保存完整模型列表。
 
@@ -125,8 +125,7 @@ bin\Release\ApiTester.json
       "ProxyHost": "",
       "ProxyPort": "",
       "ProxyUser": "",
-      "ProxyPassword": "",
-      "AdvancedVisible": false
+      "ProxyPassword": ""
     }
   ]
 }
