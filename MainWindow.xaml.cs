@@ -580,6 +580,7 @@ namespace ApiTester
         {
             bool show = AdvancedBox.IsChecked == true;
             AdvancedPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            OpenAiJuiceBtn.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
             UpdateMessageBoxMode(show);
             UpdateProxyInputState();
             UpdateAdvancedSummary();
@@ -616,8 +617,6 @@ namespace ApiTester
             if (StreamBox.IsChecked == true) active.Add("Stream");
             if (HasNonDefaultTimeout(ListModelsTimeoutBox, 5)) active.Add("List timeout");
             if (HasNonDefaultTimeout(SendTimeoutBox, 30)) active.Add("Send timeout");
-            if (!string.Equals(ProxyTypeBox.SelectedItem as string, "None", StringComparison.OrdinalIgnoreCase))
-                active.Add("Proxy");
             if (!string.IsNullOrWhiteSpace(SystemBox.Text)) active.Add("System");
 
             if (active.Count == 0)
