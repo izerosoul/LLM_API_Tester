@@ -72,6 +72,7 @@
                     <Label Content="API Key:" Width="74"/>
                     <TextBox x:Name="KeyBox" Width="460"/>
                     <Button x:Name="ListModelsBtn" Content="List Models" Width="100" Margin="12,0,0,0"/>
+                    <Button x:Name="BalanceBtn" Content="Balance" Width="82" Margin="8,0,0,0"/>
                 </StackPanel>
                 <!-- Model + thinking + output length -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">

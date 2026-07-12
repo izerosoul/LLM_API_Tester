@@ -82,6 +82,7 @@ namespace ApiTester
             AdvancedBox.Unchecked += (s, e) => UpdateAdvancedVisibility();
 
             ListModelsBtn.Click += async (s, e) => await OnListModels();
+            BalanceBtn.Click += async (s, e) => await OnGetBalance();
             SendBtn.Click += async (s, e) => await OnSend();
             StopBtn.Click += (s, e) => _cts?.Cancel();
             CopyReqBtn.Click += (s, e) => CopyToClipboard(RequestBox.Text);
@@ -369,6 +370,17 @@ namespace ApiTester
             return true;
         }
 
+        private static HttpRequestSpec BuildBalanceRequest(ApiConfig cfg)
+        {
+            var spec = new HttpRequestSpec
+            {
+                Method = "GET",
+                Url = ProtocolUtil.BuildUrl(cfg.BaseUrl, "/v1/dashboard/billing/subscription")
+            };
+            spec.Headers["Authorization"] = "Bearer " + cfg.ApiKey;
+            return spec;
+        }
+
         // ===== 列模型 =====
         private async Task OnListModels()
         {
@@ -430,6 +442,54 @@ namespace ApiTester
                     _lastResponse = res.Body;
                     _lastRawResponse = RenderResponse(res);
                     ResponseBox.Text = $"// {models.Count} model(s)\n" + string.Join("\n", models);
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = "Status: ERROR";
+                ResponseBox.Text = "Error:\n" + ex.Message;
+            }
+            finally
+            {
+                TimeText.Text = $"Time: {res.ElapsedMs} ms";
+                _cts?.Dispose();
+                _cts = null;
+                SetBusy(false, null);
+            }
+        }
+
+        // ===== 查询余额 =====
+        private async Task OnGetBalance()
+        {
+            if (_busy) return;
+            SetBusy(true, "Getting balance...");
+            _cts = new CancellationTokenSource();
+            _lastResponse = "";
+            _lastRawResponse = "";
+            TtftText.Text = "TTFT: -";
+            TokensText.Text = "Tokens: -";
+
+            HttpResult res = new();
+            try
+            {
+                HttpRequestSpec spec = BuildBalanceRequest(CurrentConfig());
+                SetRequestText(RenderRequest(spec));
+                res = await _client.SendAsync(spec,
+                    TimeSpan.FromSeconds(ReadTimeoutSeconds(ListModelsTimeoutBox, 5)),
+                    _cts.Token,
+                    CurrentProxyConfig());
+
+                _lastResponse = res.Body;
+                _lastRawResponse = RenderResponse(res);
+                if (res.Error != null)
+                {
+                    StatusText.Text = res.Cancelled ? "Status: Cancelled" : "Status: ERROR";
+                    if (!res.Cancelled) ResponseBox.Text = "Request error:\n" + res.Error.Message;
+                }
+                else
+                {
+                    StatusText.Text = $"Status: {res.Status} {res.StatusText}";
+                    ResponseBox.Text = JsonUtil.Pretty(res.Body);
                 }
             }
             catch (Exception ex)
@@ -900,6 +960,7 @@ namespace ApiTester
         {
             _busy = busy;
             ListModelsBtn.IsEnabled = !busy;
+            BalanceBtn.IsEnabled = !busy;
             SendBtn.IsEnabled = !busy;
             StopBtn.IsEnabled = busy;
             if (status != null) StatusText.Text = "Status: " + status;
