@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 
 namespace ApiTester
 {
@@ -97,6 +98,7 @@ namespace ApiTester
             SavePresetBtn.Click += (s, e) => OnSavePreset();
             DelPresetBtn.Click += (s, e) => OnDelPreset();
             PresetBox.SelectionChanged += (s, e) => OnPresetSelected();
+            PresetBox.DropDownOpened += (s, e) => ScrollPresetDropDownToTop();
         }
 
         // 选定协议后填默认 Base URL，并按协议能力启用/禁用 temperature
@@ -922,6 +924,29 @@ namespace ApiTester
         private void SortPresetsByName()
         {
             _presets.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void ScrollPresetDropDownToTop()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var popup = PresetBox.Template.FindName("PART_Popup", PresetBox) as Popup;
+                var scrollViewer = popup?.Child == null ? null : FindVisualChild<ScrollViewer>(popup.Child);
+                scrollViewer?.ScrollToTop();
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
+        private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T match) return match;
+
+                T? nested = FindVisualChild<T>(child);
+                if (nested != null) return nested;
+            }
+            return null;
         }
 
         private void RestoreLastPreset()
