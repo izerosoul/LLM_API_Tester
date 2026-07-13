@@ -59,6 +59,16 @@
         <!-- ===== 顶部：连接与参数 ===== -->
         <GroupBox Header="Connection &amp; Parameters" DockPanel.Dock="Top">
             <StackPanel Margin="6">
+                <!-- Preset + Advanced -->
+                <StackPanel Orientation="Horizontal" Margin="0,3">
+                    <Label Content="Preset:" Width="74"/>
+                    <ComboBox x:Name="PresetBox" Width="220" IsEditable="True"/>
+                    <Button x:Name="SavePresetBtn" Content="Save" Width="70" Margin="8,0,0,0"/>
+                    <Button x:Name="DelPresetBtn" Content="Delete" Width="70" Margin="8,0,0,0"/>
+                    <CheckBox x:Name="AdvancedBox" Content="Advanced" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                    <TextBlock x:Name="AdvancedSummaryText" VerticalAlignment="Center" Margin="10,0,0,0"
+                               Foreground="#64748B" Visibility="Collapsed"/>
+                </StackPanel>
                 <!-- 协议 + Base URL -->
                 <StackPanel Orientation="Horizontal" Margin="0,3">
                     <Label Content="Protocol:" Width="74"/>
@@ -82,16 +92,6 @@
                     <ComboBox x:Name="ThinkingBox" Width="96"/>
                     <Label Content="Max Output Tokens:" Width="124" Margin="12,0,0,0"/>
                     <TextBox x:Name="MaxTokensBox" Width="70" Text="1024"/>
-                </StackPanel>
-                <!-- Preset + Advanced -->
-                <StackPanel Orientation="Horizontal" Margin="0,3">
-                    <Label Content="Preset:" Width="74"/>
-                    <ComboBox x:Name="PresetBox" Width="220" IsEditable="True"/>
-                    <Button x:Name="SavePresetBtn" Content="Save" Width="70" Margin="8,0,0,0"/>
-                    <Button x:Name="DelPresetBtn" Content="Delete" Width="70" Margin="8,0,0,0"/>
-                    <CheckBox x:Name="AdvancedBox" Content="Advanced" VerticalAlignment="Center" Margin="14,0,0,0"/>
-                    <TextBlock x:Name="AdvancedSummaryText" VerticalAlignment="Center" Margin="10,0,0,0"
-                               Foreground="#64748B" Visibility="Collapsed"/>
                 </StackPanel>
                 <!-- Advanced options -->
                 <StackPanel x:Name="AdvancedPanel" Visibility="Collapsed">
