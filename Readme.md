@@ -18,6 +18,8 @@ bin\Release\ApiTester.exe
 ```
 窗口打开时**自动屏幕居中**。
 
+项目源码位于 `src\` 目录；根目录保留 `ApiTester.csproj`、`Build.bat`、`Readme.md` 和资源目录等入口文件。
+
 ---
 
 ## 二、界面总览
@@ -50,15 +52,16 @@ bin\Release\ApiTester.exe
   - 各协议默认地址：OpenAI / Responses = `https://api.openai.com`；Claude = `https://api.anthropic.com`；Gemini = `https://generativelanguage.googleapis.com`。
 - **API Key**：密钥，**明文显示**。不同协议鉴权方式不同，工具会自动放到正确位置：OpenAI / Responses → `Authorization: Bearer`；Claude → `x-api-key`（+ `anthropic-version`）；Gemini → URL 的 `?key=`（+ `x-goog-api-key` 头）。Preset 会保存 Key。
 - **List Models**：用当前 Base URL + Key 拉取模型列表，填进 Model 下拉；列表也会显示在右侧响应框。失败时状态栏/响应框显示错误。
+- **Balance**：通过当前 Base URL + Key 请求 `GET /v1/dashboard/billing/subscription`，用于查看 OpenAI 兼容服务的订阅 / 余额相关信息。请求会显示到 Request，响应显示在 Response。
 - **Model**：模型 ID，可从下拉选，也可手输。
-- **Thinking**：思考等级。选择模型时会自动切换可选等级表并匹配默认值；OpenAI Chat / Responses 会把非 `None` 值作为 reasoning 参数发送，Claude / Gemini 忽略。
+- **Thinking**：思考等级。选择模型时会自动切换可选等级表并匹配默认值；支持 thinking 的模型默认选择 `Medium`；OpenAI Chat / Responses 会把非 `None` 值作为 reasoning 参数发送，Claude / Gemini 忽略。
   - 普通模型：`None`
   - `o1` / `o3` / `o4`：`None` / `Low` / `Medium` / `High` / `XHigh`
   - `Opus 4.x` / `Claude Opus`：`None` / `Low` / `Medium` / `High` / `XHigh`
   - `GPT 5.x` / `GPT OSS` / `Codex` / `GLM 5.x` / `Minimax M3` / `reasoning`：`None` / `Minimal` / `Low` / `Medium` / `High` / `XHigh`
 - **Max Output Tokens**：最大生成 token 数（默认 1024）。
 - **Preset**：连接预设（可编辑下拉）。见第六节。
-- **Advanced**：默认折叠；展开后显示低频配置。折叠时如果有高级配置正在生效，会显示 `Advanced: ...` 摘要。
+- **Advanced**：默认折叠；展开后显示低频配置。折叠时如果部分高级配置正在生效，会显示 `Advanced: ...` 摘要。
 - **Temperature**：temperature 采样温度（**留空则不发送**）。Claude 协议下禁用。
 - **Stream (SSE)**：勾选后走流式，响应实时逐块追加显示，并统计首字耗时 TTFT。
 - **List Models Timeout**：List Models 请求超时秒数，默认 5 秒。
@@ -66,13 +69,14 @@ bin\Release\ApiTester.exe
 - **Proxy**：请求代理。`None` 为直连；`HTTP` 使用 HTTP/HTTPS 代理；`SOCKS5` 使用内置 SOCKS5 连接层。Host / Port 必填，User / Pass 可留空。
 - **System**：system 提示（可留空）。
 - **Message**：要发送的用户消息（默认 `Hello`），支持粘贴多行文本；Advanced 展开时显示为多行输入框。
-- **OpenAI Juice**：把内置的 OpenAI Juice 测试 XML 填入 Message。
+- **OpenAI Juice**：Advanced 展开后显示；把内置的 OpenAI Juice 测试 XML 填入 Message，再点一次会恢复为 `Hello`。
 
 ### 中部
 - **Request (preview)**：发送前**实时预览**将要发出的完整 HTTP 请求包（请求行 + Host + 头 + body），Key 会按真实内容显示。
   - **Send** 发送 · **Stop** 取消进行中的请求 · **Copy** 复制预览文本。
   - **Editable**：勾选后可直接修改 Preview 内容；只有手动改过 Preview 后，发送时才会按编辑后的 HTTP 包发送。修改上方配置项会重新生成 Preview。
   - **Show List Request**：勾选后，点 **List Models** 时才把本次发送的模型列表 HTTP 包显示到 Request；默认不勾选，取消勾选会恢复普通 Message 发送预览。
+  - **Balance** 请求会直接显示本次发送的 HTTP 包，不受 **Show List Request** 控制。
 - **Response**：响应内容。
   - **Format JSON**：把响应体美化缩进。
   - **Raw**：显示完整 HTTP 响应包（状态行 + 返回头 + body；流式时 body 为原始 SSE 累积）。
@@ -116,7 +120,7 @@ bin\Release\ApiTester.json
       "Name": "my-openai",
       "Kind": 0,
       "BaseUrl": "https://api.openai.com",
-      "ApiKey": "sk-xxxx",
+      "ApiKey": "<your-api-key>",
       "Model": "gpt-4.1",
       "ThinkingLevel": "None",
       "ListModelsTimeoutSeconds": "5",
@@ -147,9 +151,10 @@ bin\Release\ApiTester.json
 
 ## 八、四协议端点速览
 
-| 协议 | 列模型 | 对话 | 鉴权 |
+| 协议 / 功能 | 列模型 | 对话 / 查询 | 鉴权 |
 |---|---|---|---|
 | OpenAI Chat | `GET /v1/models` | `POST /v1/chat/completions` | `Authorization: Bearer` |
 | Claude | `GET /v1/models` | `POST /v1/messages` | `x-api-key` + `anthropic-version: 2023-06-01` |
 | Gemini | `GET /v1beta/models?key=` | `POST /v1beta/models/{model}:generateContent?key=` | `?key=` / `x-goog-api-key` |
 | OpenAI Responses | `GET /v1/models` | `POST /v1/responses` | `Authorization: Bearer` |
+| Balance | - | `GET /v1/dashboard/billing/subscription` | `Authorization: Bearer` |
