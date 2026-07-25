@@ -48,33 +48,33 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
+    <ApplicationDefinition Include="src\App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="MainWindow.xaml">
+    <Page Include="src\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="ApiClient.cs" />
-    <Compile Include="ApiProtocol.cs" />
-    <Compile Include="App.xaml.cs">
+    <Compile Include="src\ApiClient.cs" />
+    <Compile Include="src\ApiProtocol.cs" />
+    <Compile Include="src\App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ClaudeProtocol.cs" />
-    <Compile Include="GeminiProtocol.cs" />
-    <Compile Include="Json.cs" />
-    <Compile Include="MainWindow.xaml.cs">
+    <Compile Include="src\ClaudeProtocol.cs" />
+    <Compile Include="src\GeminiProtocol.cs" />
+    <Compile Include="src\Json.cs" />
+    <Compile Include="src\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="OpenAiChatProtocol.cs" />
-    <Compile Include="OpenAiResponsesProtocol.cs" />
-    <Compile Include="Presets.cs" />
+    <Compile Include="src\OpenAiChatProtocol.cs" />
+    <Compile Include="src\OpenAiResponsesProtocol.cs" />
+    <Compile Include="src\Presets.cs" />
   </ItemGroup>
 
   <ItemGroup>

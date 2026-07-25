@@ -7,3 +7,8 @@ publish_sc/
 *.user
 *.suo
 *.cache
+
+.codegraph
+.claude
+.agents
+.build
