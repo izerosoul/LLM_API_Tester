@@ -55,7 +55,7 @@ bin\Release\ApiTester.exe
 - **Balance**：通过当前 Base URL + Key 请求 `GET /v1/dashboard/billing/subscription`，用于查看 OpenAI 兼容服务的订阅 / 余额相关信息。请求会显示到 Request，响应显示在 Response。
 - **Model**：模型 ID，可从下拉选，也可手输。
 - **Thinking**：思考等级。选择模型时会自动切换可选等级表并匹配默认值；支持 thinking 的模型默认选择 `Medium`；OpenAI Chat / Responses 会把非 `None` 值作为 reasoning 参数发送，Claude / Gemini 忽略。
-  - 普通模型：`None`
+  - 普通模型（未匹配到特定列表）：`None` / `Low` / `Medium` / `High` / `Max`
   - `o1` / `o3` / `o4`：`None` / `Low` / `Medium` / `High` / `XHigh`
   - `Opus 4.x` / `Claude Opus`：`None` / `Low` / `Medium` / `High` / `XHigh`
   - `GPT 5.x` / `GPT OSS` / `Codex` / `GLM 5.x` / `Minimax M3` / `reasoning`：`None` / `Minimal` / `Low` / `Medium` / `High` / `XHigh`

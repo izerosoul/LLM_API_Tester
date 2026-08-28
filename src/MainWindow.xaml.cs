@@ -15,9 +15,11 @@ namespace ApiTester
     {
         private readonly ApiClient _client = new();
         private static readonly string[] NoThinkingLevels = { "None" };
+        private static readonly string[] DefaultThinkingLevels = { "None", "Low", "Medium", "High", "Max" };
         private static readonly string[] OSeriesThinkingLevels = { "None", "Low", "Medium", "High", "XHigh" };
         private static readonly string[] AnthropicThinkingLevels = { "None", "Low", "Medium", "High", "XHigh" };
         private static readonly string[] FullThinkingLevels = { "None", "Minimal", "Low", "Medium", "High", "XHigh" };
+        private static readonly string[] AllThinkingLevels = { "None", "Minimal", "Low", "Medium", "High", "XHigh", "Max" };
         private IApiProtocol[] _protocols = Array.Empty<IApiProtocol>();
         private List<Preset> _presets = new();
         private CancellationTokenSource? _cts;
@@ -729,7 +731,7 @@ namespace ApiTester
                 return FullThinkingLevels;
             if (key.Contains("opus48") || key.Contains("opus4") || key.Contains("claudeopus"))
                 return AnthropicThinkingLevels;
-            return NoThinkingLevels;
+            return DefaultThinkingLevels;
         }
 
         private static string DefaultThinkingLevelForModel(string model)
@@ -750,7 +752,7 @@ namespace ApiTester
 
         private static string NormalizeThinkingLevel(string? level)
         {
-            return NormalizeThinkingLevel(level, FullThinkingLevels);
+            return NormalizeThinkingLevel(level, AllThinkingLevels);
         }
 
         private static string NormalizeThinkingLevel(string? level, string[] allowedLevels)
@@ -785,6 +787,7 @@ namespace ApiTester
                 case "medium": return "medium";
                 case "high": return "high";
                 case "xhigh": return "xhigh";
+                case "max": return "max";
                 default: return null;
             }
         }
