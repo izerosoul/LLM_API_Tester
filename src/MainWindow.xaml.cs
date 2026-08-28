@@ -92,7 +92,6 @@ namespace ApiTester
             RequestBox.TextChanged += (s, e) => { if (!_suspendRequestDirty && RequestEditModeBox.IsChecked == true) _requestEdited = true; };
             RequestEditModeBox.Checked += (s, e) => SetRequestEditMode(true);
             RequestEditModeBox.Unchecked += (s, e) => SetRequestEditMode(false);
-            ShowListRequestBox.Unchecked += (s, e) => UpdatePreview();
             FormatJsonBtn.Click += (s, e) => ResponseBox.Text = JsonUtil.Pretty(_lastResponse);
             RawRespBtn.Click += (s, e) => ResponseBox.Text = string.IsNullOrEmpty(_lastRawResponse) ? _lastResponse : _lastRawResponse;
             CopyRespBtn.Click += (s, e) => CopyToClipboard(ResponseBox.Text);
@@ -398,8 +397,7 @@ namespace ApiTester
             try
             {
                 HttpRequestSpec spec = proto.BuildListModels(CurrentConfig());
-                if (ShowListRequestBox.IsChecked == true)
-                    SetRequestText(RenderRequest(spec));
+                SetRequestText(RenderRequest(spec));
                 res = await _client.SendAsync(spec,
                     TimeSpan.FromSeconds(ReadTimeoutSeconds(ListModelsTimeoutBox, 5)),
                     _cts.Token,
@@ -438,8 +436,6 @@ namespace ApiTester
                         ModelBox.SelectedIndex = 0;
                     _suspendPreview = false;
                     ApplyThinkingProfileForModel();
-                    if (ShowListRequestBox.IsChecked != true)
-                        UpdatePreview();
                     RememberActivePresetModel();
 
                     _lastResponse = res.Body;

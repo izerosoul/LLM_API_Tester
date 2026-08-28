@@ -165,7 +165,6 @@
                     <Button x:Name="StopBtn" Content="Stop" Width="60" Margin="6,0,0,0" IsEnabled="False"/>
                     <Button x:Name="CopyReqBtn" Content="Copy" Width="60" Margin="6,0,0,0"/>
                     <CheckBox x:Name="RequestEditModeBox" Content="Editable" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                    <CheckBox x:Name="ShowListRequestBox" Content="Show List Request" VerticalAlignment="Center" Margin="10,0,0,0"/>
                 </StackPanel>
                 <TextBox x:Name="RequestBox" IsReadOnly="True" FontFamily="Consolas" Style="{StaticResource EditorBoxStyle}"
                          AcceptsReturn="True" TextWrapping="NoWrap"
