@@ -133,18 +133,28 @@ namespace ApiTester
             return (baseUrl ?? "").TrimEnd('/');
         }
 
-        // 拼接端点；如果用户已在 Base URL 末尾写了 /v1 这类版本段，就不再重复追加。
+        // 拼接端点；只要 Base URL 以 /vN 结尾（v 后带数字，如 /v1、/v1beta），
+        // 就认为版本已包含在 Base URL 中：去掉端点开头的版本段，只拼接后面的路径，
+        // 并保证斜杠不重不漏。
         public static string BuildUrl(string baseUrl, string endpoint)
         {
             string b = TrimBase(baseUrl);
             string path = endpoint.StartsWith("/") ? endpoint : "/" + endpoint;
             if (TryGetLeadingVersionSegment(path, out string versionSegment)
-                && BaseEndsWithVersionSegment(b, versionSegment))
+                && BaseEndsWithVersion(b))
             {
                 path = path.Substring(versionSegment.Length + 1);
                 if (path.Length == 0) path = "/";
             }
             return b + path;
+        }
+
+        // 判断一段路径片段是否是版本段（v/V 开头且后面紧跟数字）
+        private static bool IsVersionSegment(string segment)
+        {
+            if (segment.Length < 2) return false;
+            if (segment[0] != 'v' && segment[0] != 'V') return false;
+            return char.IsDigit(segment[1]);
         }
 
         private static bool TryGetLeadingVersionSegment(string path, out string versionSegment)
@@ -153,14 +163,14 @@ namespace ApiTester
             string value = path.StartsWith("/") ? path.Substring(1) : path;
             int slash = value.IndexOf('/');
             string firstSegment = slash >= 0 ? value.Substring(0, slash) : value;
-            if (firstSegment.Length < 2) return false;
-            if ((firstSegment[0] != 'v' && firstSegment[0] != 'V') || !char.IsDigit(firstSegment[1])) return false;
+            if (!IsVersionSegment(firstSegment)) return false;
 
             versionSegment = firstSegment;
             return true;
         }
 
-        private static bool BaseEndsWithVersionSegment(string baseUrl, string versionSegment)
+        // 判断 Base URL 末尾是否已经带有 /vN 版本段（忽略 query/fragment 与末尾斜杠）
+        private static bool BaseEndsWithVersion(string baseUrl)
         {
             string value = baseUrl;
             int query = value.IndexOfAny(new[] { '?', '#' });
@@ -168,9 +178,8 @@ namespace ApiTester
             value = value.TrimEnd('/');
 
             int slash = value.LastIndexOf('/');
-            if (slash < 0 || slash == value.Length - 1) return false;
-            string lastSegment = value.Substring(slash + 1);
-            return string.Equals(lastSegment, versionSegment, StringComparison.OrdinalIgnoreCase);
+            if (slash < 0) return false;
+            return IsVersionSegment(value.Substring(slash + 1));
         }
     }
 }

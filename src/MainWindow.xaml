@@ -129,6 +129,8 @@
                     <TextBox x:Name="MessageBox" Width="626" Height="26" Text="Hello"
                              AcceptsReturn="True" TextWrapping="NoWrap"
                              VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Hidden"/>
+                    <Button x:Name="PreviewBtn" Content="Preview" Width="76" Height="26"
+                            VerticalAlignment="Top" Margin="8,0,0,0"/>
                     <Button x:Name="OpenAiJuiceBtn" Content="OpenAI Juice" Width="106" Height="26"
                             Visibility="Collapsed"
                             VerticalAlignment="Top" Margin="8,0,0,0"/>

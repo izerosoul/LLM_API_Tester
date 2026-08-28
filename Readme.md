@@ -44,7 +44,7 @@ bin\Release\ApiTester.exe
 
 ### 顶部
 - **Protocol**：协议。切换会清空 Model 列表；选 Claude 时 **Temperature** 会被禁用（该模型不接受 temperature）。
-- **Base URL**：API 根地址，如 `https://api.openai.com`。工具会自动补该协议对应的路径（如 `/v1/chat/completions`）；如果你已经填到 `/v1` / `/v1beta`，不会重复追加版本段。
+- **Base URL**：API 根地址，如 `https://api.openai.com`。工具会自动补该协议对应的路径（如 `/v1/chat/completions`）。只要 Base URL 以 `/vN` 结尾（v 后带数字，如 `/v1`、`/v2`、`/v1beta`），就认为版本已包含在 Base URL 中，只追加后面的路径（如 `/chat/completions`），且斜杠不会重复或缺失。
 - **Official URL**（勾选框）：
   - **勾选**：切换协议时自动把 Base URL 填成该协议默认地址（勾上的当下也会立即填当前协议默认）。
   - **不勾（默认）**：切换协议**不动** Base URL——方便你填自己的中转/自建/本地地址。
@@ -68,7 +68,7 @@ bin\Release\ApiTester.exe
 - **Send Timeout**：Send 请求超时秒数，默认 30 秒；流式请求也会按该值限制总耗时。
 - **Proxy**：请求代理。`None` 为直连；`HTTP` 使用 HTTP/HTTPS 代理；`SOCKS5` 使用内置 SOCKS5 连接层。Host / Port 必填，User / Pass 可留空。
 - **System**：system 提示（可留空）。
-- **Message**：要发送的用户消息（默认 `Hello`），支持粘贴多行文本；Advanced 展开时显示为多行输入框。
+- **Message**：要发送的用户消息（默认 `Hello`），支持粘贴多行文本；Advanced 展开时显示为多行输入框。其右侧的 **Preview** 按钮点击后立即用当前表单重新生成 Request 预览（在 Editable 模式下也会丢弃手动修改、回到自动生成的结果）。
 - **OpenAI Juice**：Advanced 展开后显示；把内置的 OpenAI Juice 测试 XML 填入 Message，再点一次会恢复为 `Hello`。
 
 ### 中部

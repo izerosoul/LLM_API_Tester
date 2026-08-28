@@ -77,6 +77,7 @@ namespace ApiTester
             ProxyPasswordBox.TextChanged += (s, e) => UpdateAdvancedSummary();
             SystemBox.TextChanged += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
             MessageBox.TextChanged += (s, e) => UpdatePreview();
+            PreviewBtn.Click += (s, e) => UpdatePreview();
             StreamBox.Checked += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
             StreamBox.Unchecked += (s, e) => { UpdatePreview(); UpdateAdvancedSummary(); };
             AdvancedBox.Checked += (s, e) => UpdateAdvancedVisibility();
