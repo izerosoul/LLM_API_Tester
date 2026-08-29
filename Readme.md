@@ -1,32 +1,31 @@
 # LLM API Tester 使用说明
 
-一个测试各家大模型 API 状态的桌面小工具（WPF）。支持 4 种协议：**OpenAI Chat Completions、Claude / Anthropic、Google Gemini、OpenAI Responses (Codex)**。
+一个测试各渠道大模型 API 的GUI小工具（WPF）。
+
+支持 4 种协议：**OpenAI Chat Completions、Claude / Anthropic、Google Gemini、OpenAI Responses (Codex)**。
+
+使用.NET Framework 4.8编译，体积小，Windows10(只要不是太老版本)以上系统都可直接运行无需额外依赖。
 
 ---
 
 ## 一、运行 / 编译
 
-在源码目录 `D:\Dev\CSharp\APITest` 下：
-
-```
-Build.bat
-```
-脚本会用 VS2026 的 MSBuild 直接编译 **Release / .NET Framework 4.8** 版本。输出文件为：
+VS2026_Build.bat为VS2026 的 快捷编译脚本，输出文件为：
 
 ```
 bin\Release\ApiTester.exe
 ```
-窗口打开时**自动屏幕居中**。
-
-项目源码位于 `src\` 目录；根目录保留 `ApiTester.csproj`、`Build.bat`、`Readme.md` 和资源目录等入口文件。
-
 ---
 
 ## 二、界面总览
 
 - **顶部 “Connection & Parameters”**：连接信息与请求参数。
+
 - **中部**：左 = **Request (preview)** 发送前请求预览，右 = **Response** 响应；中间竖条可拖动调节左右宽度。
+
 - **底部状态栏**：`Status` / `Time` / `TTFT` / `Tokens`。
+
+  ![ScreenShot](ScreenShot.png)
 
 ---
 
