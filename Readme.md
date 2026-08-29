@@ -156,3 +156,9 @@ bin\Release\ApiTester.json
 | Gemini | `GET /v1beta/models?key=` | `POST /v1beta/models/{model}:generateContent?key=` | `?key=` / `x-goog-api-key` |
 | OpenAI Responses | `GET /v1/models` | `POST /v1/responses` | `Authorization: Bearer` |
 | Balance | - | `GET /v1/dashboard/billing/subscription` | `Authorization: Bearer` |
+
+## 九、社区交流
+
+> **真诚、友善、团结、专业** —— LINUX DO 社区
+
+[Linux DO](https://linux.do/)
